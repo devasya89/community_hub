@@ -4,6 +4,17 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import Amenities from "./pages/Amenities";
+import Events from "./pages/Events";
+import Visitors from "./pages/Visitors";
+import Complaints from "./pages/Complaints";
+import Contact from "./pages/Contact";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminVisitors from "./pages/admin/AdminVisitors";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -16,7 +27,22 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/amenities" element={<Amenities />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/visitors" element={<Visitors />} />
+          <Route path="/complaints" element={<Complaints />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/visitors" element={<AdminVisitors />} />
+          <Route path="/admin/events" element={<AdminDashboard />} />
+          <Route path="/admin/complaints" element={<AdminDashboard />} />
+          <Route path="/admin/amenities" element={<AdminDashboard />} />
+          <Route path="/admin/emergency" element={<AdminDashboard />} />
+          <Route path="/admin/settings" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
