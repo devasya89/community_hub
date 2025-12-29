@@ -1,0 +1,220 @@
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { ArrowRight, Shield, Users, Calendar, Phone, MessageSquare, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import heroImage from "@/assets/hero-building.jpg";
+
+const features = [
+  {
+    icon: Users,
+    title: "Visitor Management",
+    description: "Track and manage all visitors with digital records",
+  },
+  {
+    icon: Shield,
+    title: "Emergency Contacts",
+    description: "Quick access to essential emergency numbers",
+  },
+  {
+    icon: Calendar,
+    title: "Events & Activities",
+    description: "Stay updated with community events and gatherings",
+  },
+  {
+    icon: MessageSquare,
+    title: "Complaint System",
+    description: "Submit and track complaints effortlessly",
+  },
+  {
+    icon: Star,
+    title: "Amenities",
+    description: "Explore and book society amenities",
+  },
+  {
+    icon: Phone,
+    title: "24/7 Support",
+    description: "Round-the-clock assistance for residents",
+  },
+];
+
+const stats = [
+  { value: "500+", label: "Residents" },
+  { value: "50+", label: "Amenities" },
+  { value: "24/7", label: "Support" },
+  { value: "98%", label: "Satisfaction" },
+];
+
+export function HeroSection() {
+  return (
+    <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img
+          src={heroImage}
+          alt="Modern society complex"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/80 to-primary/60" />
+      </div>
+
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-3xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="inline-block px-4 py-2 rounded-full bg-secondary/20 text-secondary text-sm font-medium mb-6">
+              Welcome to Modern Living
+            </span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight mb-6"
+          >
+            Your Complete{" "}
+            <span className="text-secondary">Society Management</span>{" "}
+            Solution
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-lg text-primary-foreground/80 mb-8 max-w-xl"
+          >
+            Streamline community living with our comprehensive platform. Manage visitors, book amenities, report issues, and stay connected with your neighbors.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-wrap gap-4"
+          >
+            <Link to="/register">
+              <Button variant="gold" size="xl" className="gap-2">
+                Get Started
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+            <Link to="/amenities">
+              <Button variant="heroLight" size="xl">
+                Explore Amenities
+              </Button>
+            </Link>
+          </motion.div>
+
+          {/* Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16"
+          >
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center md:text-left">
+                <div className="text-3xl md:text-4xl font-display font-bold text-secondary">
+                  {stat.value}
+                </div>
+                <div className="text-sm text-primary-foreground/70 mt-1">
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function FeaturesSection() {
+  return (
+    <section className="py-24 bg-muted/50">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center max-w-2xl mx-auto mb-16"
+        >
+          <span className="text-secondary font-medium text-sm uppercase tracking-wider">
+            Our Services
+          </span>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mt-3 mb-4">
+            Everything You Need for{" "}
+            <span className="gradient-text">Community Living</span>
+          </h2>
+          <p className="text-muted-foreground">
+            Access all society services from one unified platform designed for modern residential communities.
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="glass-card p-6 rounded-2xl hover:shadow-lg transition-all duration-300 group"
+            >
+              <div className="w-12 h-12 rounded-xl gold-gradient flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <feature.icon className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="font-display text-xl font-semibold text-foreground mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                {feature.description}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function CTASection() {
+  return (
+    <section className="py-24 hero-gradient">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center max-w-3xl mx-auto"
+        >
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-6">
+            Ready to Transform Your{" "}
+            <span className="text-secondary">Community Experience?</span>
+          </h2>
+          <p className="text-primary-foreground/80 mb-8 text-lg">
+            Join thousands of residents who have simplified their society management with SocietyHub.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link to="/register">
+              <Button variant="gold" size="xl" className="gap-2">
+                Register Now
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+            <Link to="/contact">
+              <Button variant="heroLight" size="xl">
+                Contact Admin
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
