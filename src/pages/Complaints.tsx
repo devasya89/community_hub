@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSociety } from "@/contexts/SocietyContext";
+import { Navigate } from "react-router-dom";
 
 const complaintCategories = [
   "Maintenance",
@@ -54,6 +56,7 @@ const existingComplaints = [
 ];
 
 const Complaints = () => {
+  const { selectedSociety, isLoggedIn } = useSociety();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
@@ -68,6 +71,10 @@ const Complaints = () => {
     rating: "",
     feedback: "",
   });
+
+  if (!selectedSociety || !isLoggedIn) {
+    return <Navigate to="/select-society" replace />;
+  }
 
   const handleComplaintSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +116,7 @@ const Complaints = () => {
             className="text-center max-w-2xl mx-auto mb-12"
           >
             <span className="text-secondary font-medium text-sm uppercase tracking-wider">
-              Voice Your Concerns
+              {selectedSociety.name}
             </span>
             <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mt-3 mb-4">
               Complaints & <span className="gradient-text">Feedback</span>

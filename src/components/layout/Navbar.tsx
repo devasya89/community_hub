@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Building2, Shield } from "lucide-react";
+import { Menu, X, Building2, Shield, LogOut, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSociety } from "@/contexts/SocietyContext";
 
 const navLinks = [
-  { href: "/", label: "Home" },
   { href: "/amenities", label: "Amenities" },
   { href: "/events", label: "Events" },
   { href: "/visitors", label: "Visitors" },
@@ -16,6 +16,13 @@ const navLinks = [
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { selectedSociety, isLoggedIn, clearSociety } = useSociety();
+
+  const handleLogout = () => {
+    clearSociety();
+    navigate("/");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
@@ -31,36 +38,66 @@ export function Navbar() {
             </span>
           </Link>
 
+          {/* Society Badge (if logged in) */}
+          {selectedSociety && isLoggedIn && (
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/10 text-secondary text-sm">
+              <MapPin className="w-3 h-3" />
+              <span className="font-medium">{selectedSociety.name}</span>
+            </div>
+          )}
+
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
+            {isLoggedIn && selectedSociety ? (
+              navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    location.pathname === link.href
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))
+            ) : (
               <Link
-                key={link.href}
-                to={link.href}
+                to="/"
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  location.pathname === link.href
+                  location.pathname === "/"
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                {link.label}
+                Home
               </Link>
-            ))}
+            )}
           </div>
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/login">
-              <Button variant="ghost" size="sm">
-                Sign In
+            {isLoggedIn && selectedSociety ? (
+              <Button variant="ghost" size="sm" className="gap-2" onClick={handleLogout}>
+                <LogOut className="w-4 h-4" />
+                Logout
               </Button>
-            </Link>
-            <Link to="/admin/login">
-              <Button variant="gold" size="sm" className="gap-2">
-                <Shield className="w-4 h-4" />
-                Admin
-              </Button>
-            </Link>
+            ) : (
+              <>
+                <Link to="/select-society">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/admin/login">
+                  <Button variant="gold" size="sm" className="gap-2">
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -83,32 +120,63 @@ export function Navbar() {
             className="md:hidden bg-background border-b border-border"
           >
             <div className="container mx-auto px-4 py-4 space-y-2">
-              {navLinks.map((link) => (
+              {/* Society Badge Mobile */}
+              {selectedSociety && isLoggedIn && (
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary/10 text-secondary text-sm mb-4">
+                  <MapPin className="w-3 h-3" />
+                  <span className="font-medium">{selectedSociety.name}</span>
+                </div>
+              )}
+              
+              {isLoggedIn && selectedSociety ? (
+                navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className={`block px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                      location.pathname === link.href
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))
+              ) : (
                 <Link
-                  key={link.href}
-                  to={link.href}
+                  to="/"
                   onClick={() => setIsOpen(false)}
                   className={`block px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                    location.pathname === link.href
+                    location.pathname === "/"
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
-                  {link.label}
+                  Home
                 </Link>
-              ))}
+              )}
               <div className="pt-4 border-t border-border flex gap-3">
-                <Link to="/login" className="flex-1" onClick={() => setIsOpen(false)}>
-                  <Button variant="outline" className="w-full">
-                    Sign In
+                {isLoggedIn && selectedSociety ? (
+                  <Button variant="outline" className="w-full gap-2" onClick={() => { handleLogout(); setIsOpen(false); }}>
+                    <LogOut className="w-4 h-4" />
+                    Logout
                   </Button>
-                </Link>
-                <Link to="/admin/login" className="flex-1" onClick={() => setIsOpen(false)}>
-                  <Button variant="gold" className="w-full gap-2">
-                    <Shield className="w-4 h-4" />
-                    Admin
-                  </Button>
-                </Link>
+                ) : (
+                  <>
+                    <Link to="/select-society" className="flex-1" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link to="/admin/login" className="flex-1" onClick={() => setIsOpen(false)}>
+                      <Button variant="gold" className="w-full gap-2">
+                        <Shield className="w-4 h-4" />
+                        Admin
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
