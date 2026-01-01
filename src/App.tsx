@@ -17,6 +17,11 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminVisitors from "./pages/admin/AdminVisitors";
+import AdminEvents from "./pages/admin/AdminEvents";
+import AdminComplaints from "./pages/admin/AdminComplaints";
+import AdminAmenities from "./pages/admin/AdminAmenities";
+import AdminEmergency from "./pages/admin/AdminEmergency";
+import AdminSettings from "./pages/admin/AdminSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,11 +47,11 @@ const App = () => (
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/visitors" element={<AdminVisitors />} />
-            <Route path="/admin/events" element={<AdminDashboard />} />
-            <Route path="/admin/complaints" element={<AdminDashboard />} />
-            <Route path="/admin/amenities" element={<AdminDashboard />} />
-            <Route path="/admin/emergency" element={<AdminDashboard />} />
-            <Route path="/admin/settings" element={<AdminDashboard />} />
+            <Route path="/admin/events" element={<AdminEvents />} />
+            <Route path="/admin/complaints" element={<AdminComplaints />} />
+            <Route path="/admin/amenities" element={<AdminAmenities />} />
+            <Route path="/admin/emergency" element={<AdminEmergency />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
