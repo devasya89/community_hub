@@ -1,21 +1,27 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, Building2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Building2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useSociety } from "@/contexts/SocietyContext";
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { selectedSociety, setIsLoggedIn, setUserRole } = useSociety();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  if (!selectedSociety) {
+    return <Navigate to="/select-society" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,11 +30,13 @@ const Login = () => {
     // Simulate login
     setTimeout(() => {
       setIsLoading(false);
+      setIsLoggedIn(true);
+      setUserRole("user");
       toast({
         title: "Welcome back!",
-        description: "You have successfully logged in.",
+        description: `You have successfully logged in to ${selectedSociety.name}.`,
       });
-      navigate("/");
+      navigate("/amenities");
     }, 1500);
   };
 
@@ -51,11 +59,32 @@ const Login = () => {
             </span>
           </Link>
 
+          {/* Selected Society Info */}
+          <div className="glass-card p-4 rounded-xl mb-6">
+            <div className="flex items-center gap-3">
+              <img
+                src={selectedSociety.image}
+                alt={selectedSociety.name}
+                className="w-12 h-12 rounded-lg object-cover"
+              />
+              <div className="flex-1">
+                <h3 className="font-medium text-foreground">{selectedSociety.name}</h3>
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  {selectedSociety.address}
+                </p>
+              </div>
+              <Link to="/select-society" className="text-sm text-secondary hover:underline">
+                Change
+              </Link>
+            </div>
+          </div>
+
           <h1 className="font-display text-3xl font-bold text-foreground mb-2">
             Welcome Back
           </h1>
           <p className="text-muted-foreground mb-8">
-            Sign in to access your account and manage your society services.
+            Sign in to access your society services.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -129,10 +158,10 @@ const Login = () => {
             <Building2 className="w-12 h-12 text-primary" />
           </div>
           <h2 className="font-display text-3xl font-bold text-primary-foreground mb-4">
-            Your Community, Connected
+            {selectedSociety.name}
           </h2>
           <p className="text-primary-foreground/70">
-            Access all society services, manage visitors, book amenities, and stay updated with community events - all from one platform.
+            Access all society services, manage visitors, book amenities, and stay updated with community events.
           </p>
         </motion.div>
       </div>

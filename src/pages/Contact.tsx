@@ -7,38 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-
-const emergencyContacts = [
-  { name: "Security Office", number: "+1 234 567 8900", available: "24/7" },
-  { name: "Fire Emergency", number: "101", available: "24/7" },
-  { name: "Medical Emergency", number: "102", available: "24/7" },
-  { name: "Police", number: "100", available: "24/7" },
-  { name: "Society Manager", number: "+1 234 567 8901", available: "9 AM - 6 PM" },
-  { name: "Maintenance Helpdesk", number: "+1 234 567 8902", available: "8 AM - 10 PM" },
-];
-
-const adminContacts = [
-  {
-    name: "Mr. Rajesh Kumar",
-    role: "Society President",
-    email: "president@societyhub.com",
-    phone: "+1 234 567 8910",
-  },
-  {
-    name: "Mrs. Priya Sharma",
-    role: "Secretary",
-    email: "secretary@societyhub.com",
-    phone: "+1 234 567 8911",
-  },
-  {
-    name: "Mr. Anil Gupta",
-    role: "Treasurer",
-    email: "treasurer@societyhub.com",
-    phone: "+1 234 567 8912",
-  },
-];
+import { useSociety } from "@/contexts/SocietyContext";
+import { Navigate } from "react-router-dom";
 
 const Contact = () => {
+  const { selectedSociety, isLoggedIn } = useSociety();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
@@ -46,6 +19,12 @@ const Contact = () => {
     subject: "",
     message: "",
   });
+
+  if (!selectedSociety || !isLoggedIn) {
+    return <Navigate to="/select-society" replace />;
+  }
+
+  const emergencyContacts = selectedSociety.emergencyContacts;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +46,7 @@ const Contact = () => {
             className="text-center max-w-2xl mx-auto mb-16"
           >
             <span className="text-secondary font-medium text-sm uppercase tracking-wider">
-              Get in Touch
+              {selectedSociety.name}
             </span>
             <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mt-3 mb-4">
               Contact <span className="gradient-text">Us</span>
@@ -139,34 +118,6 @@ const Contact = () => {
                   </Button>
                 </form>
               </div>
-
-              {/* Admin Contacts */}
-              <div className="mt-8">
-                <h2 className="font-display text-2xl font-semibold text-foreground mb-6">
-                  Society Committee
-                </h2>
-                <div className="space-y-4">
-                  {adminContacts.map((admin, index) => (
-                    <div key={index} className="glass-card p-4 rounded-xl">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full gold-gradient flex items-center justify-center">
-                          <span className="text-primary font-bold text-lg">
-                            {admin.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium text-foreground">{admin.name}</h3>
-                          <p className="text-sm text-secondary">{admin.role}</p>
-                        </div>
-                        <div className="text-right text-sm">
-                          <p className="text-muted-foreground">{admin.email}</p>
-                          <p className="text-foreground">{admin.phone}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </motion.div>
 
             {/* Emergency Contacts & Info */}
@@ -178,7 +129,7 @@ const Contact = () => {
               {/* Office Info */}
               <div className="glass-card p-8 rounded-2xl mb-8">
                 <h2 className="font-display text-2xl font-semibold text-foreground mb-6">
-                  Office Information
+                  Society Information
                 </h2>
                 <div className="space-y-4">
                   <div className="flex items-start gap-4">
@@ -188,17 +139,8 @@ const Contact = () => {
                     <div>
                       <h3 className="font-medium text-foreground">Address</h3>
                       <p className="text-muted-foreground text-sm">
-                        123 Society Complex, Main Street, Downtown, City - 123456
+                        {selectedSociety.address}
                       </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Phone className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-foreground">Phone</h3>
-                      <p className="text-muted-foreground text-sm">+1 234 567 890</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -207,7 +149,7 @@ const Contact = () => {
                     </div>
                     <div>
                       <h3 className="font-medium text-foreground">Email</h3>
-                      <p className="text-muted-foreground text-sm">contact@societyhub.com</p>
+                      <p className="text-muted-foreground text-sm">contact@{selectedSociety.id}.societyhub.com</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -240,13 +182,13 @@ const Contact = () => {
                     >
                       <div>
                         <h3 className="font-medium text-foreground">{contact.name}</h3>
-                        <p className="text-xs text-muted-foreground">{contact.available}</p>
+                        <p className="text-xs text-muted-foreground">{contact.role}</p>
                       </div>
                       <a
-                        href={`tel:${contact.number}`}
+                        href={`tel:${contact.phone}`}
                         className="font-mono text-lg font-semibold text-destructive hover:underline"
                       >
-                        {contact.number}
+                        {contact.phone}
                       </a>
                     </div>
                   ))}

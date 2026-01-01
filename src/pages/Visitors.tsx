@@ -4,7 +4,10 @@ import { Layout } from "@/components/layout/Layout";
 import { Search, UserCheck, UserX, Clock, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useSociety } from "@/contexts/SocietyContext";
+import { Navigate } from "react-router-dom";
 
+// Sample visitor data - in production this would come from the society context/database
 const visitorData = [
   {
     id: 1,
@@ -56,40 +59,15 @@ const visitorData = [
     date: "Dec 28, 2024",
     status: "checked-out",
   },
-  {
-    id: 6,
-    name: "Lisa Garcia",
-    purpose: "Family Visit",
-    flatNo: "B-301",
-    checkIn: "3:00 PM",
-    checkOut: "-",
-    date: "Dec 29, 2024",
-    status: "checked-in",
-  },
-  {
-    id: 7,
-    name: "Tom Anderson",
-    purpose: "Delivery",
-    flatNo: "A-201",
-    checkIn: "2:30 PM",
-    checkOut: "2:45 PM",
-    date: "Dec 29, 2024",
-    status: "checked-out",
-  },
-  {
-    id: 8,
-    name: "Anna Martinez",
-    purpose: "Guest",
-    flatNo: "C-401",
-    checkIn: "4:00 PM",
-    checkOut: "-",
-    date: "Dec 29, 2024",
-    status: "checked-in",
-  },
 ];
 
 const Visitors = () => {
+  const { selectedSociety, isLoggedIn } = useSociety();
   const [searchTerm, setSearchTerm] = useState("");
+
+  if (!selectedSociety || !isLoggedIn) {
+    return <Navigate to="/select-society" replace />;
+  }
 
   const filteredVisitors = visitorData.filter(
     (visitor) =>
@@ -112,7 +90,7 @@ const Visitors = () => {
             className="text-center max-w-2xl mx-auto mb-12"
           >
             <span className="text-secondary font-medium text-sm uppercase tracking-wider">
-              Visitor Management
+              {selectedSociety.name}
             </span>
             <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mt-3 mb-4">
               Visitor <span className="gradient-text">Log</span>
