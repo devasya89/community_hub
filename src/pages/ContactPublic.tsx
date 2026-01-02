@@ -197,13 +197,6 @@ const ContactPublic = () => {
                     <span className="font-medium text-foreground">Register as Resident</span>
                     <span className="text-primary group-hover:translate-x-1 transition-transform">→</span>
                   </Link>
-                  <Link
-                    to="/admin-login"
-                    className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors group"
-                  >
-                    <span className="font-medium text-foreground">Admin Login</span>
-                    <span className="text-primary group-hover:translate-x-1 transition-transform">→</span>
-                  </Link>
                 </div>
               </div>
             </motion.div>
