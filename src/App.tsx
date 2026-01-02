@@ -11,6 +11,7 @@ import Events from "./pages/Events";
 import Visitors from "./pages/Visitors";
 import Complaints from "./pages/Complaints";
 import Contact from "./pages/Contact";
+import ContactPublic from "./pages/ContactPublic";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminLogin from "./pages/AdminLogin";
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/visitors" element={<Visitors />} />
             <Route path="/complaints" element={<Complaints />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/contact-us" element={<ContactPublic />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/admin/login" element={<AdminLogin />} />

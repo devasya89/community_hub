@@ -207,7 +207,7 @@ export function CTASection() {
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
-            <Link to="/contact">
+            <Link to="/contact-us">
               <Button variant="heroLight" size="xl">
                 Contact Admin
               </Button>
