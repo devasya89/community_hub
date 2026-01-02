@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Users,
@@ -15,8 +14,20 @@ import {
   Settings,
   Bell,
   UserCog,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSociety } from "@/contexts/SocietyContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const sidebarLinks = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -33,12 +44,54 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
+const notifications = [
+  {
+    id: 1,
+    title: "New Complaint",
+    message: "A new complaint has been submitted by Unit A-101",
+    time: "5 min ago",
+    unread: true
+  },
+  {
+    id: 2,
+    title: "Visitor Arrived",
+    message: "Delivery person at gate for Unit B-205",
+    time: "15 min ago",
+    unread: true
+  },
+  {
+    id: 3,
+    title: "Event Reminder",
+    message: "Annual General Meeting tomorrow at 6 PM",
+    time: "1 hour ago",
+    unread: false
+  },
+  {
+    id: 4,
+    title: "Maintenance Update",
+    message: "Elevator maintenance completed successfully",
+    time: "2 hours ago",
+    unread: false
+  },
+  {
+    id: 5,
+    title: "New Registration",
+    message: "New user registration request from Unit C-302",
+    time: "3 hours ago",
+    unread: false
+  }
+];
+
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { selectedSociety, clearSociety } = useSociety();
+
+  const unreadCount = notifications.filter(n => n.unread).length;
 
   const handleLogout = () => {
+    clearSociety();
     navigate("/");
   };
 
@@ -73,6 +126,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </div>
             </Link>
           </div>
+
+          {/* Society Name */}
+          {selectedSociety && (
+            <div className="px-6 py-3 border-b border-sidebar-border bg-sidebar-accent/30">
+              <p className="text-xs text-sidebar-foreground/60">Managing</p>
+              <p className="text-sm font-medium text-sidebar-foreground truncate">{selectedSociety.name}</p>
+            </div>
+          )}
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -125,19 +186,87 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <div className="flex-1" />
 
             <div className="flex items-center gap-4">
-              <button className="relative p-2 rounded-lg hover:bg-muted transition-colors">
-                <Bell className="w-5 h-5 text-muted-foreground" />
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-destructive" />
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full gold-gradient flex items-center justify-center">
-                  <span className="text-sm font-bold text-primary">A</span>
-                </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-foreground">Admin User</p>
-                  <p className="text-xs text-muted-foreground">Super Admin</p>
-                </div>
-              </div>
+              {/* Notifications Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="w-5 h-5 text-muted-foreground" />
+                    {unreadCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                      >
+                        {unreadCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuLabel className="flex items-center justify-between">
+                    <span>Notifications</span>
+                    {unreadCount > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {unreadCount} new
+                      </Badge>
+                    )}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <ScrollArea className="h-[300px]">
+                    {notifications.map((notification) => (
+                      <DropdownMenuItem 
+                        key={notification.id} 
+                        className="flex flex-col items-start p-3 cursor-pointer focus:bg-muted"
+                      >
+                        <div className="flex items-start justify-between w-full gap-2">
+                          <span className={`font-medium text-sm ${notification.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
+                            {notification.title}
+                          </span>
+                          {notification.unread && (
+                            <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1" />
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                          {notification.message}
+                        </p>
+                        <span className="text-xs text-muted-foreground/70 mt-1">
+                          {notification.time}
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                  </ScrollArea>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="justify-center text-primary text-sm">
+                    View all notifications
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-full gold-gradient flex items-center justify-center">
+                      <span className="text-sm font-bold text-primary">A</span>
+                    </div>
+                    <div className="hidden md:block text-left">
+                      <p className="text-sm font-medium text-foreground">Admin User</p>
+                      <p className="text-xs text-muted-foreground">Super Admin</p>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-muted-foreground hidden md:block" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/settings">Settings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>
