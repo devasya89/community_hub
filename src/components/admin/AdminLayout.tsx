@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const sidebarLinks = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -185,8 +186,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
             <div className="flex-1" />
 
-            <div className="flex items-center gap-4">
-              {/* Notifications Dropdown */}
+            <div className="flex items-center gap-3">
+              {/* Theme Toggle */}
+              <ThemeToggle />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative">

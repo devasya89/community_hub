@@ -143,6 +143,12 @@ const Login = () => {
               Create account
             </Link>
           </p>
+
+          <p className="text-center text-muted-foreground mt-4">
+            <Link to="/contact-us" className="text-secondary font-medium hover:underline">
+              Contact Us
+            </Link>
+          </p>
         </motion.div>
       </div>
 
