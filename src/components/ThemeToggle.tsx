@@ -26,7 +26,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="relative w-10 h-10 rounded-full bg-muted/50 hover:bg-muted border border-border/50 transition-all duration-300"
+      className="relative w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/30 transition-all duration-300 shadow-sm"
     >
       <AnimatePresence mode="wait" initial={false}>
         {theme === "light" ? (
@@ -38,7 +38,7 @@ export function ThemeToggle() {
             transition={{ duration: 0.2 }}
             className="absolute inset-0 flex items-center justify-center"
           >
-            <Sun className="h-5 w-5 text-secondary" />
+            <Sun className="h-5 w-5 text-amber-500" />
           </motion.div>
         ) : (
           <motion.div
@@ -49,7 +49,7 @@ export function ThemeToggle() {
             transition={{ duration: 0.2 }}
             className="absolute inset-0 flex items-center justify-center"
           >
-            <Moon className="h-5 w-5 text-secondary" />
+            <Moon className="h-5 w-5 text-blue-400" />
           </motion.div>
         )}
       </AnimatePresence>
