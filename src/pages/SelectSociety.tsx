@@ -104,7 +104,7 @@ const SelectSociety = () => {
           >
             <p className="text-muted-foreground">
               Don't see your society?{" "}
-              <Link to="/contact" className="text-secondary font-medium hover:underline">
+              <Link to="/contact-us" className="text-secondary font-medium hover:underline">
                 Contact us
               </Link>{" "}
               to add it.
