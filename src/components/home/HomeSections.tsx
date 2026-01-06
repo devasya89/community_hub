@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, Shield, Users, Calendar, Phone, MessageSquare, Star, Megaphone, Quote } from "lucide-react";
+import { ArrowRight, Shield, Users, Calendar, Phone, MessageSquare, Star, Quote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-building.jpg";
 
@@ -44,36 +44,6 @@ const stats = [
   { value: "98%", label: "Satisfaction" },
 ];
 
-const notices = [
-  {
-    id: 1,
-    title: "Annual General Meeting",
-    date: "Jan 15, 2026",
-    description: "All residents are requested to attend the AGM at the community hall at 6 PM.",
-    priority: "high",
-  },
-  {
-    id: 2,
-    title: "Water Supply Maintenance",
-    date: "Jan 10, 2026",
-    description: "Water supply will be interrupted from 10 AM to 2 PM for tank cleaning.",
-    priority: "medium",
-  },
-  {
-    id: 3,
-    title: "New Gym Equipment",
-    date: "Jan 8, 2026",
-    description: "New fitness equipment has been installed in the society gym. Check it out!",
-    priority: "low",
-  },
-  {
-    id: 4,
-    title: "Parking Rules Update",
-    date: "Jan 5, 2026",
-    description: "Please park only in designated spots. Violators will be fined.",
-    priority: "medium",
-  },
-];
 
 const testimonials = [
   {
@@ -248,75 +218,6 @@ export function FeaturesSection() {
   );
 }
 
-export function NoticeBoardSection() {
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-destructive/10 text-destructive border-destructive/30";
-      case "medium":
-        return "bg-secondary/10 text-secondary border-secondary/30";
-      default:
-        return "bg-muted text-muted-foreground border-border";
-    }
-  };
-
-  return (
-    <section className="py-24 bg-background">
-      <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center max-w-2xl mx-auto mb-16"
-        >
-          <span className="text-secondary font-medium text-sm uppercase tracking-wider">
-            Stay Informed
-          </span>
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mt-3 mb-4">
-            Society <span className="gradient-text">Notice Board</span>
-          </h2>
-          <p className="text-muted-foreground">
-            Important announcements and updates from the society management.
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-          {notices.map((notice, index) => (
-            <motion.div
-              key={notice.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="glass-card p-6 rounded-2xl hover:shadow-lg transition-all duration-300 group border border-border/50"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <Megaphone className="w-6 h-6 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-xs px-2 py-1 rounded-full border ${getPriorityColor(notice.priority)}`}>
-                      {notice.priority}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{notice.date}</span>
-                  </div>
-                  <h3 className="font-display text-lg font-semibold text-foreground mb-2">
-                    {notice.title}
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    {notice.description}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 export function TestimonialsSection() {
   return (
