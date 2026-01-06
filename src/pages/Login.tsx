@@ -36,7 +36,7 @@ const Login = () => {
         title: "Welcome back!",
         description: `You have successfully logged in to ${selectedSociety.name}.`,
       });
-      navigate("/amenities");
+      navigate("/dashboard");
     }, 1500);
   };
 

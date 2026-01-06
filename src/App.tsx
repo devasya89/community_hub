@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SocietyProvider } from "@/contexts/SocietyContext";
 import Index from "./pages/Index";
 import SelectSociety from "./pages/SelectSociety";
+import Dashboard from "./pages/Dashboard";
 import Amenities from "./pages/Amenities";
 import Events from "./pages/Events";
 import Visitors from "./pages/Visitors";
@@ -37,6 +38,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/select-society" element={<SelectSociety />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/amenities" element={<Amenities />} />
             <Route path="/events" element={<Events />} />
             <Route path="/visitors" element={<Visitors />} />
