@@ -4,8 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Building2, Shield, LogOut, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSociety } from "@/contexts/SocietyContext";
-import { ThemeToggle } from "@/components/ThemeToggle";
-
 const navLinks = [
   { href: "/amenities", label: "Amenities" },
   { href: "/events", label: "Events" },
@@ -77,9 +75,8 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Auth Buttons & Theme Toggle */}
+          {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <ThemeToggle />
             {isLoggedIn && selectedSociety ? (
               <Button variant="ghost" size="sm" className="gap-2" onClick={handleLogout}>
                 <LogOut className="w-4 h-4" />
@@ -159,10 +156,6 @@ export function Navbar() {
                 </Link>
               )}
               <div className="pt-4 border-t border-border flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Theme</span>
-                  <ThemeToggle />
-                </div>
                 <div className="flex gap-3">
                   {isLoggedIn && selectedSociety ? (
                     <Button variant="outline" className="w-full gap-2" onClick={() => { handleLogout(); setIsOpen(false); }}>

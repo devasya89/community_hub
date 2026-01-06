@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { Building2, MapPin, ArrowRight } from "lucide-react";
+import { Building2, MapPin, ArrowRight, ArrowLeft } from "lucide-react";
 import { societies, useSociety } from "@/contexts/SocietyContext";
 import { Button } from "@/components/ui/button";
 
@@ -20,7 +20,7 @@ const SelectSociety = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-primary/5 border-b border-border">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-6 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 w-fit">
             <div className="w-10 h-10 rounded-lg gold-gradient flex items-center justify-center">
               <Building2 className="w-5 h-5 text-primary" />
@@ -29,6 +29,16 @@ const SelectSociety = () => {
               Society<span className="gradient-text">Hub</span>
             </span>
           </Link>
+          
+          {/* Back Button */}
+          <Button
+            variant="outline"
+            onClick={() => navigate("/")}
+            className="group flex items-center gap-2 px-4 py-2 rounded-full border-2 border-secondary/30 bg-secondary/5 hover:bg-secondary/10 hover:border-secondary/50 transition-all duration-300"
+          >
+            <ArrowLeft className="w-4 h-4 text-secondary group-hover:-translate-x-1 transition-transform duration-300" />
+            <span className="text-sm font-medium text-foreground">Back to Home</span>
+          </Button>
         </div>
       </div>
 
