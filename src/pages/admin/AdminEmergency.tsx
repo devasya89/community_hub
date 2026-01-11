@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Search, Plus, Edit, Trash2, MoreVertical, Phone, AlertTriangle } from "lucide-react";
+import { Search, Plus, Trash2, MoreVertical, Phone, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -20,20 +20,48 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAdmin } from "@/contexts/AdminContext";
 
-const initialContacts = [
-  { id: 1, name: "Security Office", role: "24/7 Security", phone: "+91 98765 43210", priority: "high" },
-  { id: 2, name: "Fire Emergency", role: "Fire Department", phone: "101", priority: "high" },
-  { id: 3, name: "Medical Emergency", role: "Ambulance", phone: "102", priority: "high" },
-  { id: 4, name: "Police", role: "Local Police", phone: "100", priority: "high" },
-  { id: 5, name: "Mr. Rajesh Kumar", role: "Society Manager", phone: "+91 98765 43211", priority: "medium" },
-  { id: 6, name: "Maintenance Helpdesk", role: "General Maintenance", phone: "+91 98765 43212", priority: "low" },
-  { id: 7, name: "Electrician", role: "Electrical Issues", phone: "+91 98765 43213", priority: "medium" },
-  { id: 8, name: "Plumber", role: "Plumbing Issues", phone: "+91 98765 43214", priority: "medium" },
-];
+// Society-wise emergency contacts data
+const societyEmergencyData: Record<string, Array<{
+  id: number;
+  name: string;
+  role: string;
+  phone: string;
+  priority: string;
+}>> = {
+  "greenwood-heights": [
+    { id: 1, name: "Security Office", role: "24/7 Security", phone: "+91 98765 43211", priority: "high" },
+    { id: 2, name: "Fire Emergency", role: "Fire Department", phone: "101", priority: "high" },
+    { id: 3, name: "Medical Emergency", role: "Ambulance", phone: "102", priority: "high" },
+    { id: 4, name: "Rajesh Kumar", role: "Society Manager", phone: "+91 98765 43210", priority: "medium" },
+    { id: 5, name: "Maintenance Helpdesk", role: "General Maintenance", phone: "+91 98765 43212", priority: "low" },
+  ],
+  "sunrise-residency": [
+    { id: 1, name: "Guard Room", role: "24/7 Security", phone: "+91 98765 11110", priority: "high" },
+    { id: 2, name: "Fire Safety", role: "Fire Department", phone: "101", priority: "high" },
+    { id: 3, name: "Ambulance", role: "Medical Emergency", phone: "102", priority: "high" },
+    { id: 4, name: "Amit Sharma", role: "Society Secretary", phone: "+91 98765 12345", priority: "medium" },
+    { id: 5, name: "Electrician", role: "Electrical Issues", phone: "+91 98765 11112", priority: "medium" },
+  ],
+  "palm-grove-society": [
+    { id: 1, name: "Security Control", role: "24/7 Security", phone: "+91 99887 76656", priority: "high" },
+    { id: 2, name: "Fire Emergency", role: "Fire Department", phone: "101", priority: "high" },
+    { id: 3, name: "Medical Emergency", role: "Ambulance", phone: "108", priority: "high" },
+    { id: 4, name: "Police", role: "Local Police", phone: "100", priority: "high" },
+    { id: 5, name: "Priya Nair", role: "Property Manager", phone: "+91 99887 76655", priority: "medium" },
+    { id: 6, name: "Spa Reception", role: "Wellness Center", phone: "+91 99887 76660", priority: "low" },
+  ],
+};
 
 const AdminEmergency = () => {
   const { toast } = useToast();
+  const { selectedAdminSociety } = useAdmin();
+  
+  const initialContacts = selectedAdminSociety 
+    ? societyEmergencyData[selectedAdminSociety.id] || []
+    : [];
+  
   const [contacts, setContacts] = useState(initialContacts);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -76,13 +104,25 @@ const AdminEmergency = () => {
     }
   };
 
+  if (!selectedAdminSociety) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Please select a society to view emergency contacts.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">Emergency Contacts</h1>
-            <p className="text-muted-foreground">Manage emergency and important contact numbers</p>
+            <p className="text-muted-foreground">
+              Manage emergency contacts for {selectedAdminSociety.name}
+            </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -197,6 +237,11 @@ const AdminEmergency = () => {
                   </a>
                 </div>
               ))}
+            {filteredContacts.filter((c) => c.priority === "high").length === 0 && (
+              <div className="col-span-full text-center text-muted-foreground py-4">
+                No emergency contacts found.
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -259,6 +304,13 @@ const AdminEmergency = () => {
                         </td>
                       </tr>
                     ))}
+                  {filteredContacts.filter((c) => c.priority !== "high").length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                        No other contacts found.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

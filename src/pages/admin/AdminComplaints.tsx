@@ -18,17 +18,43 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAdmin } from "@/contexts/AdminContext";
 
-const initialComplaints = [
-  { id: 1, subject: "Water leakage in bathroom", category: "Maintenance", flatNo: "A-101", user: "John Doe", date: "Dec 27, 2024", status: "in-progress", description: "There's a water leak from the ceiling in the master bathroom." },
-  { id: 2, subject: "Parking spot occupied", category: "Parking", flatNo: "B-205", user: "Jane Smith", date: "Dec 25, 2024", status: "resolved", description: "Someone is regularly parking in my designated spot A-15." },
-  { id: 3, subject: "Elevator not working", category: "Maintenance", flatNo: "C-302", user: "Mike Johnson", date: "Dec 28, 2024", status: "pending", description: "The elevator in Tower B has been out of service since morning." },
-  { id: 4, subject: "Noisy neighbors", category: "Noise", flatNo: "D-102", user: "Sarah Williams", date: "Dec 29, 2024", status: "pending", description: "Loud music every night after 11 PM from flat D-103." },
-  { id: 5, subject: "Street lights not working", category: "Maintenance", flatNo: "A-405", user: "Tom Brown", date: "Dec 26, 2024", status: "resolved", description: "Three street lights near parking area B are not functioning." },
-];
+// Society-wise complaints data
+const societyComplaintsData: Record<string, Array<{
+  id: number;
+  subject: string;
+  category: string;
+  flatNo: string;
+  user: string;
+  date: string;
+  status: string;
+  description: string;
+}>> = {
+  "greenwood-heights": [
+    { id: 1, subject: "Water leakage in bathroom", category: "Maintenance", flatNo: "A-101", user: "John Doe", date: "Jan 08, 2026", status: "in-progress", description: "There's a water leak from the ceiling in the master bathroom." },
+    { id: 2, subject: "Parking spot occupied", category: "Parking", flatNo: "B-205", user: "Jane Smith", date: "Jan 06, 2026", status: "resolved", description: "Someone is regularly parking in my designated spot A-15." },
+    { id: 3, subject: "Elevator not working", category: "Maintenance", flatNo: "C-302", user: "Mike Johnson", date: "Jan 09, 2026", status: "pending", description: "The elevator in Tower B has been out of service since morning." },
+  ],
+  "sunrise-residency": [
+    { id: 1, subject: "Noisy neighbors", category: "Noise", flatNo: "A-201", user: "Amit Patel", date: "Jan 07, 2026", status: "pending", description: "Loud music every night after 11 PM from flat A-202." },
+    { id: 2, subject: "Street lights not working", category: "Maintenance", flatNo: "B-102", user: "Priya Sharma", date: "Jan 05, 2026", status: "resolved", description: "Three street lights near parking area B are not functioning." },
+  ],
+  "palm-grove-society": [
+    { id: 1, subject: "Swimming pool not clean", category: "Amenities", flatNo: "PG-101", user: "Rajesh Kumar", date: "Jan 08, 2026", status: "in-progress", description: "The pool water has not been cleaned for a week." },
+    { id: 2, subject: "Spa equipment issue", category: "Amenities", flatNo: "PG-305", user: "Sunita Nair", date: "Jan 09, 2026", status: "pending", description: "Sauna room is not heating properly." },
+    { id: 3, subject: "Garden maintenance", category: "Maintenance", flatNo: "PG-402", user: "Vikram Singh", date: "Jan 04, 2026", status: "resolved", description: "Rooftop garden needs trimming and watering schedule." },
+  ],
+};
 
 const AdminComplaints = () => {
   const { toast } = useToast();
+  const { selectedAdminSociety } = useAdmin();
+  
+  const initialComplaints = selectedAdminSociety 
+    ? societyComplaintsData[selectedAdminSociety.id] || []
+    : [];
+  
   const [complaints, setComplaints] = useState(initialComplaints);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -71,13 +97,25 @@ const AdminComplaints = () => {
     }
   };
 
+  if (!selectedAdminSociety) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Please select a society to view complaints.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">Complaints</h1>
-            <p className="text-muted-foreground">Manage and resolve resident complaints</p>
+            <p className="text-muted-foreground">
+              Manage complaints for {selectedAdminSociety.name}
+            </p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm">
@@ -171,6 +209,11 @@ const AdminComplaints = () => {
               </div>
             </div>
           ))}
+          {filteredComplaints.length === 0 && (
+            <div className="glass-card p-8 rounded-2xl text-center text-muted-foreground">
+              No complaints found for this society.
+            </div>
+          )}
         </motion.div>
       </div>
     </AdminLayout>

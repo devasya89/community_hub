@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Search, Plus, Edit, Trash2, MoreVertical, UserCheck, UserX } from "lucide-react";
+import { Search, Plus, Trash2, MoreVertical, UserCheck, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -20,16 +20,43 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAdmin } from "@/contexts/AdminContext";
 
-const initialVisitors = [
-  { id: 1, name: "John Smith", purpose: "Guest", flatNo: "A-101", checkIn: "10:30 AM", checkOut: "2:00 PM", date: "Dec 29, 2024", status: "checked-out" },
-  { id: 2, name: "Sarah Johnson", purpose: "Delivery", flatNo: "B-205", checkIn: "11:00 AM", checkOut: "-", date: "Dec 29, 2024", status: "checked-in" },
-  { id: 3, name: "Mike Williams", purpose: "Maintenance", flatNo: "C-302", checkIn: "9:45 AM", checkOut: "-", date: "Dec 29, 2024", status: "checked-in" },
-  { id: 4, name: "Emily Brown", purpose: "Family", flatNo: "A-405", checkIn: "8:00 AM", checkOut: "6:00 PM", date: "Dec 29, 2024", status: "checked-out" },
-];
+// Society-wise visitors data
+const societyVisitorsData: Record<string, Array<{
+  id: number;
+  name: string;
+  purpose: string;
+  flatNo: string;
+  checkIn: string;
+  checkOut: string;
+  date: string;
+  status: string;
+}>> = {
+  "greenwood-heights": [
+    { id: 1, name: "John Smith", purpose: "Guest", flatNo: "A-101", checkIn: "10:30 AM", checkOut: "2:00 PM", date: "Jan 10, 2026", status: "checked-out" },
+    { id: 2, name: "Sarah Johnson", purpose: "Delivery", flatNo: "B-205", checkIn: "11:00 AM", checkOut: "-", date: "Jan 10, 2026", status: "checked-in" },
+    { id: 3, name: "Mike Williams", purpose: "Maintenance", flatNo: "C-302", checkIn: "9:45 AM", checkOut: "-", date: "Jan 10, 2026", status: "checked-in" },
+  ],
+  "sunrise-residency": [
+    { id: 1, name: "Ravi Kumar", purpose: "Guest", flatNo: "A-201", checkIn: "9:00 AM", checkOut: "12:00 PM", date: "Jan 10, 2026", status: "checked-out" },
+    { id: 2, name: "Delivery Boy", purpose: "Delivery", flatNo: "B-102", checkIn: "10:30 AM", checkOut: "-", date: "Jan 10, 2026", status: "checked-in" },
+  ],
+  "palm-grove-society": [
+    { id: 1, name: "Security Inspector", purpose: "Inspection", flatNo: "PG-101", checkIn: "8:00 AM", checkOut: "5:00 PM", date: "Jan 10, 2026", status: "checked-out" },
+    { id: 2, name: "Electrician Team", purpose: "Maintenance", flatNo: "PG-305", checkIn: "11:00 AM", checkOut: "-", date: "Jan 10, 2026", status: "checked-in" },
+    { id: 3, name: "Guest Family", purpose: "Family Visit", flatNo: "PG-402", checkIn: "2:00 PM", checkOut: "-", date: "Jan 10, 2026", status: "checked-in" },
+  ],
+};
 
 const AdminVisitors = () => {
   const { toast } = useToast();
+  const { selectedAdminSociety } = useAdmin();
+  
+  const initialVisitors = selectedAdminSociety 
+    ? societyVisitorsData[selectedAdminSociety.id] || []
+    : [];
+  
   const [visitors, setVisitors] = useState(initialVisitors);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -77,13 +104,25 @@ const AdminVisitors = () => {
     toast({ title: "Deleted", description: "Visitor record has been removed." });
   };
 
+  if (!selectedAdminSociety) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Please select a society to view visitors.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">Visitors</h1>
-            <p className="text-muted-foreground">Manage visitor check-ins and records</p>
+            <p className="text-muted-foreground">
+              Manage visitor check-ins for {selectedAdminSociety.name}
+            </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -213,6 +252,13 @@ const AdminVisitors = () => {
                     </td>
                   </tr>
                 ))}
+                {filteredVisitors.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
+                      No visitors found for this society.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
