@@ -1,18 +1,41 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { Calendar, Clock, MapPin, Users } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSociety } from "@/contexts/SocietyContext";
 import { Navigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Events = () => {
   const { selectedSociety, isLoggedIn } = useSociety();
+  const { toast } = useToast();
+  const [registeredEvents, setRegisteredEvents] = useState<string[]>([]);
 
   if (!selectedSociety || !isLoggedIn) {
     return <Navigate to="/select-society" replace />;
   }
 
   const events = selectedSociety.events;
+
+  const handleRegister = (eventId: string, eventTitle: string) => {
+    if (registeredEvents.includes(eventId)) {
+      toast({
+        title: "Already Registered",
+        description: `You are already registered for ${eventTitle}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setRegisteredEvents((prev) => [...prev, eventId]);
+    toast({
+      title: "Registration Successful!",
+      description: `You have been registered for ${eventTitle}.`,
+    });
+  };
+
+  const isRegistered = (eventId: string) => registeredEvents.includes(eventId);
 
   return (
     <Layout>
@@ -89,8 +112,20 @@ const Events = () => {
                       </div>
                     </div>
 
-                    <Button variant="gold" className="w-full">
-                      Register Now
+                    <Button 
+                      variant={isRegistered(event.id) ? "outline" : "gold"} 
+                      className="w-full"
+                      onClick={() => handleRegister(event.id, event.title)}
+                      disabled={isRegistered(event.id)}
+                    >
+                      {isRegistered(event.id) ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Registered
+                        </>
+                      ) : (
+                        "Register Now"
+                      )}
                     </Button>
                   </div>
                 </motion.div>

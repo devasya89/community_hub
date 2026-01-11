@@ -1,12 +1,21 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { Building2, MapPin, ArrowRight, ArrowLeft } from "lucide-react";
+import { Building2, MapPin, ArrowRight, ArrowLeft, Search } from "lucide-react";
 import { societies, useSociety } from "@/contexts/SocietyContext";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const SelectSociety = () => {
   const navigate = useNavigate();
   const { selectSociety } = useSociety();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredSocieties = societies.filter(
+    (society) =>
+      society.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      society.address.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleSelectSociety = (societyId: string) => {
     const society = societies.find((s) => s.id === societyId);
@@ -60,10 +69,26 @@ const SelectSociety = () => {
             <p className="text-muted-foreground text-lg">
               Choose your residential society to access amenities, events, visitor management, and more.
             </p>
+            
+            {/* Search Bar */}
+            <div className="relative mt-8 max-w-md mx-auto">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search by society name or location..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 pr-4 py-3 h-12 rounded-full border-2 border-border bg-background/50 backdrop-blur-sm focus:border-secondary transition-colors"
+              />
+            </div>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {societies.map((society, index) => (
+            {filteredSocieties.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <p className="text-muted-foreground text-lg">No societies found matching "{searchQuery}"</p>
+              </div>
+            ) : filteredSocieties.map((society, index) => (
               <motion.div
                 key={society.id}
                 initial={{ opacity: 0, y: 20 }}
