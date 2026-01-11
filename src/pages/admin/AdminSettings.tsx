@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Building2, Bell, Shield, Palette, Globe, Save } from "lucide-react";
+import { Building2, Bell, Shield, Save, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,16 +9,36 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { societies, Society } from "@/contexts/SocietyContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const AdminSettings = () => {
   const { toast } = useToast();
+  const [selectedSociety, setSelectedSociety] = useState<Society>(societies[0]);
+  
   const [societySettings, setSocietySettings] = useState({
-    name: "Greenwood Heights",
-    address: "123 Green Valley Road, Mumbai",
-    email: "admin@greenwoodheights.com",
-    phone: "+91 98765 43210",
+    name: selectedSociety.name,
+    address: selectedSociety.address,
+    email: `admin@${selectedSociety.id.replace(/-/g, "")}.com`,
+    phone: selectedSociety.emergencyContacts[0]?.phone || "+91 98765 43210",
     description: "A premium residential society with world-class amenities.",
   });
+
+  // Update settings when society changes
+  useEffect(() => {
+    setSocietySettings({
+      name: selectedSociety.name,
+      address: selectedSociety.address,
+      email: `admin@${selectedSociety.id.replace(/-/g, "")}.com`,
+      phone: selectedSociety.emergencyContacts[0]?.phone || "+91 98765 43210",
+      description: "A premium residential society with world-class amenities.",
+    });
+  }, [selectedSociety]);
 
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
@@ -50,9 +70,38 @@ const AdminSettings = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground">Manage your society and admin preferences</p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground">Settings</h1>
+            <p className="text-muted-foreground">Manage your society and admin preferences</p>
+          </div>
+          
+          {/* Society Selector */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2 min-w-[200px] justify-between">
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-secondary" />
+                  <span className="truncate">{selectedSociety.name}</span>
+                </div>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[250px]">
+              {societies.map((society) => (
+                <DropdownMenuItem
+                  key={society.id}
+                  onClick={() => setSelectedSociety(society)}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <span>{society.name}</span>
+                  {selectedSociety.id === society.id && (
+                    <Check className="w-4 h-4 text-secondary" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <motion.div

@@ -71,7 +71,7 @@ export const societies: Society[] = [
       { id: "4", icon: "Shield", name: "24/7 Security", description: "CCTV and guard service", category: "Security" },
     ],
     events: [
-      { id: "1", title: "Annual Sports Day", date: "Jan 15, 2025", time: "7:00 AM - 5:00 PM", location: "Society Grounds", attendees: 85, image: "https://images.unsplash.com/photo-1461896836934-abe0fa4d5f31?w=600&h=400&fit=crop", status: "upcoming", description: "Fun-filled sports for all ages!" },
+      { id: "1", title: "Annual Sports Day", date: "Jan 15, 2025", time: "7:00 AM - 5:00 PM", location: "Society Grounds", attendees: 85, image: "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=600&h=400&fit=crop", status: "upcoming", description: "Fun-filled sports for all ages!" },
       { id: "2", title: "Cultural Festival", date: "Feb 14, 2025", time: "4:00 PM - 10:00 PM", location: "Amphitheater", attendees: 200, image: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&h=400&fit=crop", status: "upcoming", description: "Celebrate diversity with performances." },
     ],
     emergencyContacts: [
