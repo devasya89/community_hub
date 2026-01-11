@@ -146,6 +146,14 @@
   .elegant-shadow {
     box-shadow: var(--shadow-elegant);
   }
+
+  /* Hide browser's native password reveal button */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear,
+  input[type="password"]::-webkit-credentials-auto-fill-button,
+  input[type="password"]::-webkit-textfield-decoration-container {
+    display: none !important;
+  }
 }
 
 @layer utilities {

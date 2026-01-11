@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SocietyProvider } from "@/contexts/SocietyContext";
+import { AdminProvider } from "@/contexts/AdminContext";
 import Index from "./pages/Index";
 import SelectSociety from "./pages/SelectSociety";
 import Dashboard from "./pages/Dashboard";
@@ -32,33 +33,35 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <SocietyProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/select-society" element={<SelectSociety />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/amenities" element={<Amenities />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/visitors" element={<Visitors />} />
-            <Route path="/complaints" element={<Complaints />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/contact-us" element={<ContactPublic />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/visitors" element={<AdminVisitors />} />
-            <Route path="/admin/events" element={<AdminEvents />} />
-            <Route path="/admin/complaints" element={<AdminComplaints />} />
-            <Route path="/admin/amenities" element={<AdminAmenities />} />
-            <Route path="/admin/emergency" element={<AdminEmergency />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <AdminProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/select-society" element={<SelectSociety />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/amenities" element={<Amenities />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/visitors" element={<Visitors />} />
+              <Route path="/complaints" element={<Complaints />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/contact-us" element={<ContactPublic />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/visitors" element={<AdminVisitors />} />
+              <Route path="/admin/events" element={<AdminEvents />} />
+              <Route path="/admin/complaints" element={<AdminComplaints />} />
+              <Route path="/admin/amenities" element={<AdminAmenities />} />
+              <Route path="/admin/emergency" element={<AdminEmergency />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AdminProvider>
       </SocietyProvider>
     </TooltipProvider>
   </QueryClientProvider>

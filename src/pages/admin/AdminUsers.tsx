@@ -20,17 +20,42 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAdmin } from "@/contexts/AdminContext";
 
-const initialUsers = [
-  { id: 1, name: "John Doe", email: "john@email.com", flatNo: "A-101", phone: "+1 234 567 890", status: "active" },
-  { id: 2, name: "Jane Smith", email: "jane@email.com", flatNo: "B-205", phone: "+1 234 567 891", status: "active" },
-  { id: 3, name: "Mike Johnson", email: "mike@email.com", flatNo: "C-302", phone: "+1 234 567 892", status: "inactive" },
-  { id: 4, name: "Sarah Williams", email: "sarah@email.com", flatNo: "D-102", phone: "+1 234 567 893", status: "active" },
-  { id: 5, name: "Tom Brown", email: "tom@email.com", flatNo: "A-405", phone: "+1 234 567 894", status: "active" },
-];
+// Society-wise users data
+const societyUsersData: Record<string, Array<{
+  id: number;
+  name: string;
+  email: string;
+  flatNo: string;
+  phone: string;
+  status: string;
+}>> = {
+  "greenwood-heights": [
+    { id: 1, name: "John Doe", email: "john@email.com", flatNo: "A-101", phone: "+91 98765 43210", status: "active" },
+    { id: 2, name: "Jane Smith", email: "jane@email.com", flatNo: "B-205", phone: "+91 98765 43211", status: "active" },
+    { id: 3, name: "Mike Johnson", email: "mike@email.com", flatNo: "C-302", phone: "+91 98765 43212", status: "inactive" },
+  ],
+  "sunrise-residency": [
+    { id: 1, name: "Amit Patel", email: "amit@email.com", flatNo: "A-201", phone: "+91 98765 11111", status: "active" },
+    { id: 2, name: "Priya Sharma", email: "priya@email.com", flatNo: "B-102", phone: "+91 98765 22222", status: "active" },
+  ],
+  "palm-grove-society": [
+    { id: 1, name: "Rajesh Kumar", email: "rajesh@email.com", flatNo: "PG-101", phone: "+91 99887 76655", status: "active" },
+    { id: 2, name: "Sunita Nair", email: "sunita@email.com", flatNo: "PG-305", phone: "+91 99887 76656", status: "active" },
+    { id: 3, name: "Vikram Singh", email: "vikram@email.com", flatNo: "PG-402", phone: "+91 99887 76657", status: "inactive" },
+    { id: 4, name: "Meera Iyer", email: "meera@email.com", flatNo: "PG-201", phone: "+91 99887 76658", status: "active" },
+  ],
+};
 
 const AdminUsers = () => {
   const { toast } = useToast();
+  const { selectedAdminSociety } = useAdmin();
+  
+  const initialUsers = selectedAdminSociety 
+    ? societyUsersData[selectedAdminSociety.id] || []
+    : [];
+  
   const [users, setUsers] = useState(initialUsers);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -87,13 +112,25 @@ const AdminUsers = () => {
     });
   };
 
+  if (!selectedAdminSociety) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Please select a society to view users.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">Users</h1>
-            <p className="text-muted-foreground">Manage society residents and their accounts</p>
+            <p className="text-muted-foreground">
+              Manage residents of {selectedAdminSociety.name}
+            </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -136,7 +173,7 @@ const AdminUsers = () => {
                   <div className="space-y-2">
                     <Label>Phone</Label>
                     <Input
-                      placeholder="+1 234 567 890"
+                      placeholder="+91 98765 43210"
                       value={newUser.phone}
                       onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
                     />
@@ -227,6 +264,13 @@ const AdminUsers = () => {
                     </td>
                   </tr>
                 ))}
+                {filteredUsers.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                      No users found for this society.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

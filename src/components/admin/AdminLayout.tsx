@@ -15,9 +15,12 @@ import {
   Bell,
   UserCog,
   ChevronDown,
+  Check,
+  Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSociety } from "@/contexts/SocietyContext";
+import { useSociety, societies } from "@/contexts/SocietyContext";
+import { useAdmin } from "@/contexts/AdminContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -86,11 +89,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { selectedSociety, clearSociety } = useSociety();
+  const { clearSociety } = useSociety();
+  const { 
+    adminType, 
+    selectedAdminSociety, 
+    setSelectedAdminSociety, 
+    getAccessibleSocieties,
+    logout 
+  } = useAdmin();
 
   const unreadCount = notifications.filter(n => n.unread).length;
+  const accessibleSocieties = getAccessibleSocieties();
 
   const handleLogout = () => {
+    logout();
     clearSociety();
     navigate("/");
   };
@@ -127,13 +139,49 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </Link>
           </div>
 
-          {/* Society Name */}
-          {selectedSociety && (
-            <div className="px-6 py-3 border-b border-sidebar-border bg-sidebar-accent/30">
-              <p className="text-xs text-sidebar-foreground/60">Managing</p>
-              <p className="text-sm font-medium text-sidebar-foreground truncate">{selectedSociety.name}</p>
-            </div>
-          )}
+          {/* Society Selector */}
+          <div className="px-4 py-3 border-b border-sidebar-border bg-sidebar-accent/30">
+            <p className="text-xs text-sidebar-foreground/60 mb-2 flex items-center gap-1">
+              {adminType === "super" && <Crown className="w-3 h-3 text-sidebar-primary" />}
+              {adminType === "super" ? "Super Admin - Select Society" : "Managing"}
+            </p>
+            {adminType === "super" ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-between h-auto py-2 px-3 bg-sidebar-accent/50 hover:bg-sidebar-accent text-sidebar-foreground"
+                  >
+                    <span className="text-sm font-medium truncate">
+                      {selectedAdminSociety?.name || "Select Society"}
+                    </span>
+                    <ChevronDown className="w-4 h-4 flex-shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  {accessibleSocieties.map((society) => (
+                    <DropdownMenuItem
+                      key={society.id}
+                      onClick={() => setSelectedAdminSociety(society)}
+                      className="flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">{society.name}</p>
+                        <p className="text-xs text-muted-foreground">{society.address}</p>
+                      </div>
+                      {selectedAdminSociety?.id === society.id && (
+                        <Check className="w-4 h-4 text-primary" />
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <p className="text-sm font-medium text-sidebar-foreground truncate">
+                {selectedAdminSociety?.name || "No Society Assigned"}
+              </p>
+            )}
+          </div>
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -245,11 +293,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">
                     <div className="w-9 h-9 rounded-full gold-gradient flex items-center justify-center">
-                      <span className="text-sm font-bold text-primary">A</span>
+                      <span className="text-sm font-bold text-primary">
+                        {adminType === "super" ? "S" : "A"}
+                      </span>
                     </div>
                     <div className="hidden md:block text-left">
                       <p className="text-sm font-medium text-foreground">Admin User</p>
-                      <p className="text-xs text-muted-foreground">Super Admin</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        {adminType === "super" && <Crown className="w-3 h-3" />}
+                        {adminType === "super" ? "Super Admin" : "Admin"}
+                      </p>
                     </div>
                     <ChevronDown className="w-4 h-4 text-muted-foreground hidden md:block" />
                   </Button>

@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAdmin } from "@/contexts/AdminContext";
 
 const iconOptions = [
   { value: "Dumbbell", label: "Gym", icon: Dumbbell },
@@ -42,16 +43,46 @@ const iconOptions = [
   { value: "Gamepad2", label: "Games", icon: Gamepad2 },
 ];
 
-const initialAmenities = [
-  { id: 1, name: "Fitness Center", icon: "Dumbbell", category: "Health & Wellness", description: "State-of-the-art gym with modern equipment", status: "active" },
-  { id: 2, name: "Swimming Pool", icon: "Waves", category: "Recreation", description: "Olympic-sized pool with separate kids' area", status: "active" },
-  { id: 3, name: "Covered Parking", icon: "Car", category: "Convenience", description: "Multi-level secure parking with visitor spots", status: "active" },
-  { id: 4, name: "Community Hall", icon: "Building", category: "Community", description: "Spacious venue for events and celebrations", status: "active" },
-  { id: 5, name: "Landscaped Gardens", icon: "Trees", category: "Outdoors", description: "Beautifully maintained green spaces", status: "maintenance" },
-];
+// Society-wise amenities data
+const societyAmenitiesData: Record<string, Array<{
+  id: number;
+  name: string;
+  icon: string;
+  category: string;
+  description: string;
+  status: string;
+}>> = {
+  "greenwood-heights": [
+    { id: 1, name: "Fitness Center", icon: "Dumbbell", category: "Health & Wellness", description: "State-of-the-art gym with modern equipment", status: "active" },
+    { id: 2, name: "Swimming Pool", icon: "Waves", category: "Recreation", description: "Olympic-sized pool with separate kids' area", status: "active" },
+    { id: 3, name: "Covered Parking", icon: "Car", category: "Convenience", description: "Multi-level secure parking with visitor spots", status: "active" },
+    { id: 4, name: "Community Hall", icon: "Building", category: "Community", description: "Spacious venue for events and celebrations", status: "active" },
+    { id: 5, name: "Landscaped Gardens", icon: "Trees", category: "Outdoors", description: "Beautifully maintained green spaces", status: "maintenance" },
+  ],
+  "sunrise-residency": [
+    { id: 1, name: "Gym", icon: "Dumbbell", category: "Health & Wellness", description: "Well-equipped fitness room", status: "active" },
+    { id: 2, name: "Recreation Room", icon: "Gamepad2", category: "Recreation", description: "Indoor games and entertainment", status: "active" },
+    { id: 3, name: "Parking", icon: "Car", category: "Convenience", description: "Open parking facility", status: "active" },
+    { id: 4, name: "24/7 Security", icon: "Shield", category: "Security", description: "CCTV and guard service", status: "active" },
+  ],
+  "palm-grove-society": [
+    { id: 1, name: "Infinity Pool", icon: "Waves", category: "Recreation", description: "Rooftop infinity pool with city views", status: "active" },
+    { id: 2, name: "Café & Lounge", icon: "Coffee", category: "Dining", description: "In-house café with refreshments", status: "active" },
+    { id: 3, name: "Spa & Wellness", icon: "Sparkles", category: "Health & Wellness", description: "Full-service spa treatments", status: "maintenance" },
+    { id: 4, name: "High-Speed Internet", icon: "Wifi", category: "Technology", description: "Fiber optic connectivity", status: "active" },
+    { id: 5, name: "Rooftop Garden", icon: "Trees", category: "Outdoors", description: "Organic vegetable garden", status: "active" },
+    { id: 6, name: "Business Center", icon: "Building", category: "Business", description: "Co-working space and meeting rooms", status: "active" },
+  ],
+};
 
 const AdminAmenities = () => {
   const { toast } = useToast();
+  const { selectedAdminSociety } = useAdmin();
+  
+  const initialAmenities = selectedAdminSociety 
+    ? societyAmenitiesData[selectedAdminSociety.id] || []
+    : [];
+  
   const [amenities, setAmenities] = useState(initialAmenities);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -98,13 +129,25 @@ const AdminAmenities = () => {
     toast({ title: "Status Updated", description: "Amenity status has been changed." });
   };
 
+  if (!selectedAdminSociety) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Please select a society to view amenities.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">Amenities</h1>
-            <p className="text-muted-foreground">Manage society facilities and amenities</p>
+            <p className="text-muted-foreground">
+              Manage facilities for {selectedAdminSociety.name}
+            </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -228,6 +271,11 @@ const AdminAmenities = () => {
               </div>
             );
           })}
+          {filteredAmenities.length === 0 && (
+            <div className="col-span-full glass-card p-8 rounded-2xl text-center text-muted-foreground">
+              No amenities found for this society.
+            </div>
+          )}
         </motion.div>
       </div>
     </AdminLayout>
