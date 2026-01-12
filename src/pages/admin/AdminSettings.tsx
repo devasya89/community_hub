@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Building2, Bell, Shield, Save, ChevronDown, Check } from "lucide-react";
+import { Building2, Bell, Shield, Save, ChevronDown, Check, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { societies, Society } from "@/contexts/SocietyContext";
+import { Society } from "@/contexts/SocietyContext";
+import { useAdmin } from "@/contexts/AdminContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,25 +20,36 @@ import {
 
 const AdminSettings = () => {
   const { toast } = useToast();
-  const [selectedSociety, setSelectedSociety] = useState<Society>(societies[0]);
+  const { adminType, selectedAdminSociety, getAccessibleSocieties, setSelectedAdminSociety } = useAdmin();
+  const accessibleSocieties = getAccessibleSocieties();
+  const [selectedSociety, setSelectedSociety] = useState<Society | null>(selectedAdminSociety);
+  
+  // Keep selectedSociety in sync with selectedAdminSociety
+  useEffect(() => {
+    if (selectedAdminSociety) {
+      setSelectedSociety(selectedAdminSociety);
+    }
+  }, [selectedAdminSociety]);
   
   const [societySettings, setSocietySettings] = useState({
-    name: selectedSociety.name,
-    address: selectedSociety.address,
-    email: `admin@${selectedSociety.id.replace(/-/g, "")}.com`,
-    phone: selectedSociety.emergencyContacts[0]?.phone || "+91 98765 43210",
+    name: selectedSociety?.name || "",
+    address: selectedSociety?.address || "",
+    email: selectedSociety ? `admin@${selectedSociety.id.replace(/-/g, "")}.com` : "",
+    phone: selectedSociety?.emergencyContacts[0]?.phone || "+91 98765 43210",
     description: "A premium residential society with world-class amenities.",
   });
 
   // Update settings when society changes
   useEffect(() => {
-    setSocietySettings({
-      name: selectedSociety.name,
-      address: selectedSociety.address,
-      email: `admin@${selectedSociety.id.replace(/-/g, "")}.com`,
-      phone: selectedSociety.emergencyContacts[0]?.phone || "+91 98765 43210",
-      description: "A premium residential society with world-class amenities.",
-    });
+    if (selectedSociety) {
+      setSocietySettings({
+        name: selectedSociety.name,
+        address: selectedSociety.address,
+        email: `admin@${selectedSociety.id.replace(/-/g, "")}.com`,
+        phone: selectedSociety.emergencyContacts[0]?.phone || "+91 98765 43210",
+        description: "A premium residential society with world-class amenities.",
+      });
+    }
   }, [selectedSociety]);
 
   const [notificationSettings, setNotificationSettings] = useState({
@@ -67,6 +79,26 @@ const AdminSettings = () => {
     toast({ title: "Settings Saved", description: "Security settings have been updated." });
   };
 
+  // Handle society change for super admin
+  const handleSocietyChange = (society: Society) => {
+    setSelectedSociety(society);
+    if (adminType === "super") {
+      setSelectedAdminSociety(society);
+    }
+  };
+
+  if (!selectedSociety) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+          <Building2 className="w-16 h-16 text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">No Society Selected</h2>
+          <p className="text-muted-foreground">Please select a society from the sidebar to manage settings.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -76,32 +108,44 @@ const AdminSettings = () => {
             <p className="text-muted-foreground">Manage your society and admin preferences</p>
           </div>
           
-          {/* Society Selector */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2 min-w-[200px] justify-between">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-secondary" />
-                  <span className="truncate">{selectedSociety.name}</span>
-                </div>
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[250px]">
-              {societies.map((society) => (
-                <DropdownMenuItem
-                  key={society.id}
-                  onClick={() => setSelectedSociety(society)}
-                  className="flex items-center justify-between cursor-pointer"
-                >
-                  <span>{society.name}</span>
-                  {selectedSociety.id === society.id && (
-                    <Check className="w-4 h-4 text-secondary" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Society Selector - Only show dropdown for super admin */}
+          {adminType === "super" ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2 min-w-[200px] justify-between">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-secondary" />
+                    <span className="truncate">{selectedSociety.name}</span>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[250px]">
+                {accessibleSocieties.map((society) => (
+                  <DropdownMenuItem
+                    key={society.id}
+                    onClick={() => handleSocietyChange(society)}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{society.name}</span>
+                    {selectedSociety.id === society.id && (
+                      <Check className="w-4 h-4 text-secondary" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            // Normal admin - show fixed society info
+            <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-lg border border-border">
+              <Lock className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-secondary" />
+                <span className="font-medium text-foreground">{selectedSociety.name}</span>
+              </div>
+              <span className="text-xs text-muted-foreground">(Your assigned society)</span>
+            </div>
+          )}
         </div>
 
         <motion.div
