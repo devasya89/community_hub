@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Search, Plus, Edit, Trash2, MoreVertical, Calendar, Clock, MapPin, Users, Image, Upload, Link as LinkIcon } from "lucide-react";
+import { Search, Plus, Edit, Trash2, MoreVertical, Calendar, Clock, MapPin, Users, Image, Upload, Link as LinkIcon, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -22,18 +22,29 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAdmin } from "@/contexts/AdminContext";
 
-const initialEvents = [
-  { id: 1, title: "New Year's Eve Celebration", date: "Dec 31, 2024", time: "8:00 PM - 1:00 AM", location: "Community Hall", attendees: 120, status: "upcoming", image: "" },
-  { id: 2, title: "Annual Sports Day", date: "Jan 15, 2025", time: "7:00 AM - 5:00 PM", location: "Society Grounds", attendees: 85, status: "upcoming", image: "" },
-  { id: 3, title: "Yoga Workshop", date: "Jan 20, 2025", time: "6:00 AM - 8:00 AM", location: "Terrace Garden", attendees: 40, status: "upcoming", image: "" },
-  { id: 4, title: "Cultural Festival", date: "Feb 14, 2025", time: "4:00 PM - 10:00 PM", location: "Amphitheater", attendees: 200, status: "upcoming", image: "" },
-  { id: 5, title: "Diwali Celebration", date: "Nov 12, 2024", time: "6:00 PM - 11:00 PM", location: "Community Hall", attendees: 180, status: "completed", image: "" },
-];
+// Society-wise events data
+const societyEventsData: Record<string, Array<{ id: number; title: string; date: string; time: string; location: string; attendees: number; status: string; image: string }>> = {
+  "greenwood": [
+    { id: 1, title: "New Year's Eve Celebration", date: "Dec 31, 2024", time: "8:00 PM - 1:00 AM", location: "Community Hall", attendees: 120, status: "upcoming", image: "" },
+    { id: 2, title: "Annual Sports Day", date: "Jan 15, 2025", time: "7:00 AM - 5:00 PM", location: "Society Grounds", attendees: 85, status: "upcoming", image: "" },
+    { id: 3, title: "Yoga Workshop", date: "Jan 20, 2025", time: "6:00 AM - 8:00 AM", location: "Terrace Garden", attendees: 40, status: "upcoming", image: "" },
+  ],
+  "riverside": [
+    { id: 1, title: "Cultural Festival", date: "Feb 14, 2025", time: "4:00 PM - 10:00 PM", location: "Amphitheater", attendees: 200, status: "upcoming", image: "" },
+    { id: 2, title: "Community BBQ", date: "Feb 20, 2025", time: "5:00 PM - 9:00 PM", location: "Riverside Park", attendees: 75, status: "upcoming", image: "" },
+  ],
+  "sunset": [
+    { id: 1, title: "Diwali Celebration", date: "Nov 12, 2024", time: "6:00 PM - 11:00 PM", location: "Community Hall", attendees: 180, status: "completed", image: "" },
+    { id: 2, title: "Kids Summer Camp", date: "May 15, 2025", time: "9:00 AM - 4:00 PM", location: "Recreation Center", attendees: 50, status: "upcoming", image: "" },
+  ],
+};
 
 const AdminEvents = () => {
   const { toast } = useToast();
-  const [events, setEvents] = useState(initialEvents);
+  const { selectedAdminSociety } = useAdmin();
+  const [events, setEvents] = useState<Array<{ id: number; title: string; date: string; time: string; location: string; attendees: number; status: string; image: string }>>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
@@ -42,6 +53,16 @@ const AdminEvents = () => {
   const [previewImage, setPreviewImage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newEvent, setNewEvent] = useState({ title: "", date: "", time: "", location: "", description: "", image: "" });
+
+  // Load events based on selected society
+  useEffect(() => {
+    if (selectedAdminSociety) {
+      const societyEvents = societyEventsData[selectedAdminSociety.id] || [];
+      setEvents(societyEvents);
+    } else {
+      setEvents([]);
+    }
+  }, [selectedAdminSociety]);
 
   const filteredEvents = events.filter(
     (event) =>
@@ -151,12 +172,24 @@ const AdminEvents = () => {
     reader.readAsDataURL(file);
   };
 
+  if (!selectedAdminSociety) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+          <Building2 className="w-16 h-16 text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">No Society Selected</h2>
+          <p className="text-muted-foreground">Please select a society from the sidebar to manage events.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="font-display text-3xl font-bold text-foreground">Events</h1>
+            <h1 className="font-display text-3xl font-bold text-foreground">Events - {selectedAdminSociety.name}</h1>
             <p className="text-muted-foreground">Manage society events and activities</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
