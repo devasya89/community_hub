@@ -143,7 +143,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <div className="px-4 py-3 border-b border-sidebar-border bg-sidebar-accent/30">
             <p className="text-xs text-sidebar-foreground/60 mb-2 flex items-center gap-1">
               {adminType === "super" && <Crown className="w-3 h-3 text-sidebar-primary" />}
-              {adminType === "super" ? "Super Admin - Select Society" : "Managing"}
+              {adminType === "super" ? "Super Admin - Select Society" : "Assigned Society"}
             </p>
             {adminType === "super" ? (
               <DropdownMenu>
@@ -177,9 +177,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
-                {selectedAdminSociety?.name || "No Society Assigned"}
-              </p>
+              <div className="bg-sidebar-accent/50 rounded-lg py-2 px-3">
+                <p className="text-sm font-medium text-sidebar-foreground truncate">
+                  {selectedAdminSociety?.name || "No Society Assigned"}
+                </p>
+                <p className="text-xs text-sidebar-foreground/60 mt-0.5">
+                  Access restricted to this society only
+                </p>
+              </div>
             )}
           </div>
 

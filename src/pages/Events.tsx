@@ -6,11 +6,26 @@ import { Button } from "@/components/ui/button";
 import { useSociety } from "@/contexts/SocietyContext";
 import { Navigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Events = () => {
   const { selectedSociety, isLoggedIn } = useSociety();
   const { toast } = useToast();
   const [registeredEvents, setRegisteredEvents] = useState<string[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    eventId: string;
+    eventTitle: string;
+  }>({ open: false, eventId: "", eventTitle: "" });
 
   if (!selectedSociety || !isLoggedIn) {
     return <Navigate to="/select-society" replace />;
@@ -18,7 +33,7 @@ const Events = () => {
 
   const events = selectedSociety.events;
 
-  const handleRegister = (eventId: string, eventTitle: string) => {
+  const openConfirmDialog = (eventId: string, eventTitle: string) => {
     if (registeredEvents.includes(eventId)) {
       toast({
         title: "Already Registered",
@@ -27,12 +42,16 @@ const Events = () => {
       });
       return;
     }
-    
-    setRegisteredEvents((prev) => [...prev, eventId]);
+    setConfirmDialog({ open: true, eventId, eventTitle });
+  };
+
+  const handleConfirmRegister = () => {
+    setRegisteredEvents((prev) => [...prev, confirmDialog.eventId]);
     toast({
       title: "Registration Successful!",
-      description: `You have been registered for ${eventTitle}.`,
+      description: `You have been registered for ${confirmDialog.eventTitle}.`,
     });
+    setConfirmDialog({ open: false, eventId: "", eventTitle: "" });
   };
 
   const isRegistered = (eventId: string) => registeredEvents.includes(eventId);
@@ -115,7 +134,7 @@ const Events = () => {
                     <Button 
                       variant={isRegistered(event.id) ? "outline" : "gold"} 
                       className="w-full"
-                      onClick={() => handleRegister(event.id, event.title)}
+                      onClick={() => openConfirmDialog(event.id, event.title)}
                       disabled={isRegistered(event.id)}
                     >
                       {isRegistered(event.id) ? (
@@ -134,6 +153,28 @@ const Events = () => {
           )}
         </div>
       </section>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog 
+        open={confirmDialog.open} 
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Registration</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to register for "{confirmDialog.eventTitle}"? 
+              You will receive updates about this event.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRegister}>
+              Confirm Registration
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };
