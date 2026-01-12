@@ -26,18 +26,18 @@ import { useAdmin } from "@/contexts/AdminContext";
 
 // Society-wise events data
 const societyEventsData: Record<string, Array<{ id: number; title: string; date: string; time: string; location: string; attendees: number; status: string; image: string }>> = {
-  "greenwood": [
+  "greenwood-heights": [
     { id: 1, title: "New Year's Eve Celebration", date: "Dec 31, 2024", time: "8:00 PM - 1:00 AM", location: "Community Hall", attendees: 120, status: "upcoming", image: "" },
     { id: 2, title: "Annual Sports Day", date: "Jan 15, 2025", time: "7:00 AM - 5:00 PM", location: "Society Grounds", attendees: 85, status: "upcoming", image: "" },
     { id: 3, title: "Yoga Workshop", date: "Jan 20, 2025", time: "6:00 AM - 8:00 AM", location: "Terrace Garden", attendees: 40, status: "upcoming", image: "" },
   ],
-  "riverside": [
+  "sunrise-residency": [
     { id: 1, title: "Cultural Festival", date: "Feb 14, 2025", time: "4:00 PM - 10:00 PM", location: "Amphitheater", attendees: 200, status: "upcoming", image: "" },
-    { id: 2, title: "Community BBQ", date: "Feb 20, 2025", time: "5:00 PM - 9:00 PM", location: "Riverside Park", attendees: 75, status: "upcoming", image: "" },
+    { id: 2, title: "Community BBQ", date: "Feb 20, 2025", time: "5:00 PM - 9:00 PM", location: "Society Grounds", attendees: 75, status: "upcoming", image: "" },
   ],
-  "sunset": [
-    { id: 1, title: "Diwali Celebration", date: "Nov 12, 2024", time: "6:00 PM - 11:00 PM", location: "Community Hall", attendees: 180, status: "completed", image: "" },
-    { id: 2, title: "Kids Summer Camp", date: "May 15, 2025", time: "9:00 AM - 4:00 PM", location: "Recreation Center", attendees: 50, status: "upcoming", image: "" },
+  "palm-grove-society": [
+    { id: 1, title: "Kids Art Competition", date: "Feb 28, 2025", time: "10:00 AM - 2:00 PM", location: "Recreation Room", attendees: 35, status: "upcoming", image: "" },
+    { id: 2, title: "Senior Citizens Day", date: "Mar 8, 2025", time: "11:00 AM - 4:00 PM", location: "Community Hall", attendees: 60, status: "upcoming", image: "" },
   ],
 };
 
