@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AdminMobileBottomNav } from "@/components/layout/MobileBottomNav";
 
 const sidebarLinks = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -329,7 +330,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="p-4 lg:p-8">{children}</main>
+        <main className="p-4 lg:p-8 pb-24 lg:pb-8">{children}</main>
+        
+        {/* Mobile Bottom Navigation for Admin */}
+        <AdminMobileBottomNav />
       </div>
     </div>
   );
