@@ -24,9 +24,9 @@ export function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-14 md:h-20">
+        <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-lg gold-gradient flex items-center justify-center">
