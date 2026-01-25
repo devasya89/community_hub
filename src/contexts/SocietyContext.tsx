@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 export interface Society {
   id: string;
@@ -36,8 +36,14 @@ export interface EmergencyContact {
   phone: string;
 }
 
+// Societies context for managing the list of societies
+interface SocietiesContextType {
+  societies: Society[];
+  addSociety: (society: Society) => void;
+}
+
 // Sample societies data
-export const societies: Society[] = [
+export const defaultSocieties: Society[] = [
   {
     id: "greenwood-heights",
     name: "Greenwood Heights",
@@ -105,6 +111,9 @@ export const societies: Society[] = [
   },
 ];
 
+// Societies Context (for managing the list)
+const SocietiesContext = createContext<SocietiesContextType | undefined>(undefined);
+
 interface SocietyContextType {
   selectedSociety: Society | null;
   selectSociety: (society: Society) => void;
@@ -118,6 +127,12 @@ interface SocietyContextType {
 const SocietyContext = createContext<SocietyContextType | undefined>(undefined);
 
 export function SocietyProvider({ children }: { children: ReactNode }) {
+  // Manage the global societies list
+  const [societiesList, setSocietiesList] = useState<Society[]>(() => {
+    const stored = localStorage.getItem("societiesList");
+    return stored ? JSON.parse(stored) : defaultSocieties;
+  });
+
   const [selectedSociety, setSelectedSociety] = useState<Society | null>(() => {
     const stored = localStorage.getItem("selectedSociety");
     return stored ? JSON.parse(stored) : null;
@@ -129,6 +144,15 @@ export function SocietyProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem("userRole");
     return stored as "user" | "admin" | null;
   });
+
+  // Persist societies list to localStorage
+  useEffect(() => {
+    localStorage.setItem("societiesList", JSON.stringify(societiesList));
+  }, [societiesList]);
+
+  const addSociety = (society: Society) => {
+    setSocietiesList(prev => [...prev, society]);
+  };
 
   const selectSociety = (society: Society) => {
     setSelectedSociety(society);
@@ -159,19 +183,21 @@ export function SocietyProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SocietyContext.Provider
-      value={{
-        selectedSociety,
-        selectSociety,
-        clearSociety,
-        isLoggedIn,
-        setIsLoggedIn: handleSetIsLoggedIn,
-        userRole,
-        setUserRole: handleSetUserRole,
-      }}
-    >
-      {children}
-    </SocietyContext.Provider>
+    <SocietiesContext.Provider value={{ societies: societiesList, addSociety }}>
+      <SocietyContext.Provider
+        value={{
+          selectedSociety,
+          selectSociety,
+          clearSociety,
+          isLoggedIn,
+          setIsLoggedIn: handleSetIsLoggedIn,
+          userRole,
+          setUserRole: handleSetUserRole,
+        }}
+      >
+        {children}
+      </SocietyContext.Provider>
+    </SocietiesContext.Provider>
   );
 }
 
@@ -182,3 +208,14 @@ export function useSociety() {
   }
   return context;
 }
+
+export function useSocieties() {
+  const context = useContext(SocietiesContext);
+  if (context === undefined) {
+    throw new Error("useSocieties must be used within a SocietyProvider");
+  }
+  return context;
+}
+
+// Keep the original export for backward compatibility
+export { defaultSocieties as societies };

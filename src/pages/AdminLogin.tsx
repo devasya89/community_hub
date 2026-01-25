@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/contexts/AdminContext";
-import { societies } from "@/contexts/SocietyContext";
+import { useSocieties } from "@/contexts/SocietyContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +21,7 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setAdminType, setAssignedSociety, validateSuperKey, setSelectedAdminSociety } = useAdmin();
+  const { societies } = useSocieties();
   
   const [showPassword, setShowPassword] = useState(false);
   const [showSuperKey, setShowSuperKey] = useState(false);

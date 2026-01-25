@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { useAdmin } from "@/contexts/AdminContext";
+import AddSocietyDialog from "@/components/admin/AddSocietyDialog";
 import {
   Users,
   Calendar,
@@ -57,15 +59,21 @@ const recentVisitors = [
 ];
 
 const AdminDashboard = () => {
+  const { adminType } = useAdmin();
+  const isSuperAdmin = adminType === "super";
+
   return (
     <AdminLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Welcome back! Here's what's happening in your society today.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
+              Welcome back! Here's what's happening in your society today.
+            </p>
+          </div>
+          {isSuperAdmin && <AddSocietyDialog />}
         </div>
 
         {/* Stats Grid */}

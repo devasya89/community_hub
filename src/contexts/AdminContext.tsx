@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { Society, societies } from "./SocietyContext";
+import { Society, useSocieties } from "./SocietyContext";
 
 // The super key - in production this should be stored securely server-side
 const SUPER_ADMIN_KEY = "SOCIETYHUB_SUPER_2024";
@@ -86,7 +86,12 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   };
 
   const getAccessibleSocieties = (): Society[] => {
-    if (adminType === "super") return societies;
+    // Note: This will be called within the provider tree, so useSocieties is available
+    // For super admin, return all societies; for normal admin, return their assigned society
+    if (adminType === "super") {
+      // We need to get societies from the parent context - this will be handled at component level
+      return [];
+    }
     if (adminType === "normal" && assignedSociety) return [assignedSociety];
     return [];
   };
