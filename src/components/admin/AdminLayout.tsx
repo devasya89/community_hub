@@ -19,7 +19,7 @@ import {
   Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSociety, societies } from "@/contexts/SocietyContext";
+import { useSociety, useSocieties } from "@/contexts/SocietyContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import {
   DropdownMenu,
@@ -91,16 +91,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { clearSociety } = useSociety();
+  const { societies } = useSocieties();
   const { 
     adminType, 
     selectedAdminSociety, 
     setSelectedAdminSociety, 
-    getAccessibleSocieties,
+    assignedSociety,
     logout 
   } = useAdmin();
 
   const unreadCount = notifications.filter(n => n.unread).length;
-  const accessibleSocieties = getAccessibleSocieties();
+  
+  // Get accessible societies based on admin type
+  const accessibleSocieties = adminType === "super" 
+    ? societies 
+    : (assignedSociety ? [assignedSociety] : []);
 
   const handleLogout = () => {
     logout();

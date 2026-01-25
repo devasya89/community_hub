@@ -2,13 +2,14 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Building2, MapPin, ArrowRight, ArrowLeft, Search } from "lucide-react";
-import { societies, useSociety } from "@/contexts/SocietyContext";
+import { useSociety, useSocieties } from "@/contexts/SocietyContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const SelectSociety = () => {
   const navigate = useNavigate();
   const { selectSociety } = useSociety();
+  const { societies } = useSocieties();
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredSocieties = societies.filter(
