@@ -164,7 +164,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     <ChevronDown className="w-4 h-4 flex-shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
+                <DropdownMenuContent className="w-56 bg-popover border border-border shadow-lg z-50">
                   {accessibleSocieties.map((society) => (
                     <DropdownMenuItem
                       key={society.id}
