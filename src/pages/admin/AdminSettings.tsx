@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Society } from "@/contexts/SocietyContext";
+import { Society, useSocieties } from "@/contexts/SocietyContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import {
   DropdownMenu,
@@ -20,8 +20,13 @@ import {
 
 const AdminSettings = () => {
   const { toast } = useToast();
-  const { adminType, selectedAdminSociety, getAccessibleSocieties, setSelectedAdminSociety } = useAdmin();
-  const accessibleSocieties = getAccessibleSocieties();
+  const { adminType, selectedAdminSociety, setSelectedAdminSociety, assignedSociety } = useAdmin();
+  const { societies } = useSocieties();
+  
+  // Get accessible societies based on admin type
+  const accessibleSocieties = adminType === "super" 
+    ? societies 
+    : (assignedSociety ? [assignedSociety] : []);
   const [selectedSociety, setSelectedSociety] = useState<Society | null>(selectedAdminSociety);
   
   // Keep selectedSociety in sync with selectedAdminSociety
