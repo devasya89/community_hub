@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SocietyProvider } from "@/contexts/SocietyContext";
 import { AdminProvider } from "@/contexts/AdminContext";
+import { MaintenanceProvider } from "@/contexts/MaintenanceContext";
 import Index from "./pages/Index";
 import SelectSociety from "./pages/SelectSociety";
 import Dashboard from "./pages/Dashboard";
@@ -25,6 +26,8 @@ import AdminComplaints from "./pages/admin/AdminComplaints";
 import AdminAmenities from "./pages/admin/AdminAmenities";
 import AdminEmergency from "./pages/admin/AdminEmergency";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminMaintenance from "./pages/admin/AdminMaintenance";
+import Maintenance from "./pages/Maintenance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +37,7 @@ const App = () => (
     <TooltipProvider>
       <SocietyProvider>
         <AdminProvider>
+          <MaintenanceProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -45,6 +49,7 @@ const App = () => (
               <Route path="/events" element={<Events />} />
               <Route path="/visitors" element={<Visitors />} />
               <Route path="/complaints" element={<Complaints />} />
+              <Route path="/maintenance" element={<Maintenance />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/contact-us" element={<ContactPublic />} />
               <Route path="/login" element={<Login />} />
@@ -58,9 +63,11 @@ const App = () => (
               <Route path="/admin/amenities" element={<AdminAmenities />} />
               <Route path="/admin/emergency" element={<AdminEmergency />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/admin/maintenance" element={<AdminMaintenance />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          </MaintenanceProvider>
         </AdminProvider>
       </SocietyProvider>
     </TooltipProvider>

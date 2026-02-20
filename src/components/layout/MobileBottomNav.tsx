@@ -1,12 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Calendar, Star, MessageSquare, LayoutDashboard, Settings, Phone, UserCog } from "lucide-react";
+import { Home, Users, Calendar, Star, MessageSquare, LayoutDashboard, Settings, Phone, UserCog, IndianRupee } from "lucide-react";
 import { useSociety } from "@/contexts/SocietyContext";
 
 const userNavItems = [
   { href: "/dashboard", icon: Home, label: "Home" },
   { href: "/visitors", icon: Users, label: "Visitors" },
   { href: "/events", icon: Calendar, label: "Events" },
-  { href: "/amenities", icon: Star, label: "Amenities" },
+  { href: "/maintenance", icon: IndianRupee, label: "Maintenance" },
   { href: "/complaints", icon: MessageSquare, label: "Complaints" },
 ];
 

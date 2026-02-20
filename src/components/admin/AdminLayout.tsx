@@ -8,6 +8,7 @@ import {
   Star,
   Phone,
   Building2,
+  IndianRupee,
   Menu,
   X,
   LogOut,
@@ -40,6 +41,7 @@ const sidebarLinks = [
   { href: "/admin/events", icon: Calendar, label: "Events" },
   { href: "/admin/complaints", icon: MessageSquare, label: "Complaints" },
   { href: "/admin/amenities", icon: Star, label: "Amenities" },
+  { href: "/admin/maintenance", icon: IndianRupee, label: "Maintenance" },
   { href: "/admin/emergency", icon: Phone, label: "Emergency" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
 ];
