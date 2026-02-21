@@ -40,6 +40,7 @@ export interface EmergencyContact {
 interface SocietiesContextType {
   societies: Society[];
   addSociety: (society: Society) => void;
+  removeSociety: (societyId: string) => void;
 }
 
 // Sample societies data
@@ -154,6 +155,13 @@ export function SocietyProvider({ children }: { children: ReactNode }) {
     setSocietiesList(prev => [...prev, society]);
   };
 
+  const removeSociety = (societyId: string) => {
+    setSocietiesList(prev => prev.filter(s => s.id !== societyId));
+    if (selectedSociety?.id === societyId) {
+      clearSociety();
+    }
+  };
+
   const selectSociety = (society: Society) => {
     setSelectedSociety(society);
     localStorage.setItem("selectedSociety", JSON.stringify(society));
@@ -183,7 +191,7 @@ export function SocietyProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SocietiesContext.Provider value={{ societies: societiesList, addSociety }}>
+    <SocietiesContext.Provider value={{ societies: societiesList, addSociety, removeSociety }}>
       <SocietyContext.Provider
         value={{
           selectedSociety,

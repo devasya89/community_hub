@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useAdmin } from "@/contexts/AdminContext";
 import AddSocietyDialog from "@/components/admin/AddSocietyDialog";
+import RemoveSocietyDialog from "@/components/admin/RemoveSocietyDialog";
 import {
   Users,
   Calendar,
@@ -73,7 +74,12 @@ const AdminDashboard = () => {
               Welcome back! Here's what's happening in your society today.
             </p>
           </div>
-          {isSuperAdmin && <AddSocietyDialog />}
+          {isSuperAdmin && (
+            <div className="flex gap-3">
+              <AddSocietyDialog />
+              <RemoveSocietyDialog />
+            </div>
+          )}
         </div>
 
         {/* Stats Grid */}
