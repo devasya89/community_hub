@@ -80,7 +80,7 @@ const Visitors = () => {
   const totalToday = visitorData.filter((v) => v.date === "Dec 29, 2024").length;
 
   return (
-    <Layout>
+    <Layout showChatbot>
       <section className="py-24">
         <div className="container mx-auto px-4">
           <motion.div

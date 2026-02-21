@@ -135,7 +135,7 @@ const Dashboard = () => {
   };
 
   return (
-    <Layout showFooter={false}>
+    <Layout showFooter={false} showChatbot>
       <div className="min-h-screen bg-muted/30 py-4 md:py-8">
         <div className="container mx-auto px-4">
           {/* Welcome Header - Mobile Optimized */}

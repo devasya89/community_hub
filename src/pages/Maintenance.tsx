@@ -96,7 +96,7 @@ const Maintenance = () => {
   };
 
   return (
-    <Layout showFooter={false}>
+    <Layout showFooter={false} showChatbot>
       <div className="min-h-screen bg-muted/30 py-4 md:py-8">
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
