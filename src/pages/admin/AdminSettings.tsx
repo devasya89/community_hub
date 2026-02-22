@@ -39,8 +39,8 @@ const AdminSettings = () => {
   const [societySettings, setSocietySettings] = useState({
     name: selectedSociety?.name || "",
     address: selectedSociety?.address || "",
-    email: selectedSociety ? `admin@${selectedSociety.id.replace(/-/g, "")}.com` : "",
-    phone: selectedSociety?.emergencyContacts[0]?.phone || "+91 98765 43210",
+    email: selectedSociety ? `admin@${selectedSociety.slug?.replace(/-/g, "") || selectedSociety.id.replace(/-/g, "")}.com` : "",
+    phone: "+91 98765 43210",
     description: "A premium residential society with world-class amenities.",
   });
 
@@ -50,8 +50,8 @@ const AdminSettings = () => {
       setSocietySettings({
         name: selectedSociety.name,
         address: selectedSociety.address,
-        email: `admin@${selectedSociety.id.replace(/-/g, "")}.com`,
-        phone: selectedSociety.emergencyContacts[0]?.phone || "+91 98765 43210",
+        email: `admin@${selectedSociety.slug?.replace(/-/g, "") || selectedSociety.id.replace(/-/g, "")}.com`,
+        phone: "+91 98765 43210",
         description: "A premium residential society with world-class amenities.",
       });
     }

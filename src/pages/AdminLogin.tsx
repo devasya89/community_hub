@@ -20,7 +20,7 @@ type LoginMode = "normal" | "super";
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { setAdminType, setAssignedSociety, validateSuperKey, setSelectedAdminSociety } = useAdmin();
+  const { setAdminType, setAssignedSociety, setSelectedAdminSociety } = useAdmin();
   const { societies } = useSocieties();
   
   const [showPassword, setShowPassword] = useState(false);
@@ -61,7 +61,8 @@ const AdminLogin = () => {
     // Simulate authentication
     setTimeout(() => {
       if (loginMode === "super") {
-        if (!validateSuperKey(formData.superKey)) {
+        // Simple key validation - in production this would be server-side
+        if (formData.superKey !== "SOCIETYHUB_SUPER_2024") {
           setIsLoading(false);
           toast({
             title: "Invalid Super Key",
