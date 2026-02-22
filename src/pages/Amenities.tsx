@@ -1,42 +1,46 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { 
-  Dumbbell, 
-  Waves, 
-  Car, 
-  Trees, 
-  Gamepad2, 
-  Building, 
-  Coffee, 
-  Wifi,
-  Shield,
-  Sparkles,
-  LucideIcon
+  Dumbbell, Waves, Car, Trees, Gamepad2, Building, Coffee, Wifi, Shield, Sparkles, LucideIcon
 } from "lucide-react";
 import { useSociety } from "@/contexts/SocietyContext";
 import { Navigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const iconMap: Record<string, LucideIcon> = {
-  Dumbbell,
-  Waves,
-  Car,
-  Trees,
-  Gamepad2,
-  Building,
-  Coffee,
-  Wifi,
-  Shield,
-  Sparkles,
+  Dumbbell, Waves, Car, Trees, Gamepad2, Building, Coffee, Wifi, Shield, Sparkles,
 };
+
+interface Amenity {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  category: string | null;
+}
 
 const Amenities = () => {
   const { selectedSociety, isLoggedIn } = useSociety();
+  const [amenities, setAmenities] = useState<Amenity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!selectedSociety) return;
+    const fetchAmenities = async () => {
+      const { data } = await supabase
+        .from("amenities")
+        .select("*")
+        .eq("society_id", selectedSociety.id);
+      setAmenities(data || []);
+      setIsLoading(false);
+    };
+    fetchAmenities();
+  }, [selectedSociety]);
 
   if (!selectedSociety || !isLoggedIn) {
     return <Navigate to="/select-society" replace />;
   }
-
-  const amenities = selectedSociety.amenities;
 
   return (
     <Layout showChatbot>
@@ -59,14 +63,18 @@ const Amenities = () => {
             </p>
           </motion.div>
 
-          {amenities.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Loading amenities...</p>
+            </div>
+          ) : amenities.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground text-lg">No amenities listed for this society.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {amenities.map((amenity, index) => {
-                const IconComponent = iconMap[amenity.icon] || Building;
+                const IconComponent = iconMap[amenity.icon || ""] || Building;
                 return (
                   <motion.div
                     key={amenity.id}
@@ -86,9 +94,7 @@ const Amenities = () => {
                         <h3 className="font-display text-xl font-semibold text-foreground mt-1 mb-2">
                           {amenity.name}
                         </h3>
-                        <p className="text-muted-foreground text-sm">
-                          {amenity.description}
-                        </p>
+                        <p className="text-muted-foreground text-sm">{amenity.description}</p>
                       </div>
                     </div>
                   </motion.div>

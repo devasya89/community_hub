@@ -49,17 +49,15 @@ const AddSocietyDialog = ({ onSocietyAdded }: AddSocietyDialogProps) => {
     // Simulate a slight delay for UX
     await new Promise(resolve => setTimeout(resolve, 500));
 
+    const slug = formData.name.trim().toLowerCase().replace(/\s+/g, "-");
     const newSociety = {
-      id: formData.name.toLowerCase().replace(/\s+/g, "-"),
+      slug,
       name: formData.name.trim(),
       address: formData.address.trim(),
       image: formData.image.trim() || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=400&fit=crop",
-      amenities: [],
-      events: [],
-      emergencyContacts: [],
     };
 
-    addSociety(newSociety);
+    await addSociety(newSociety);
 
     toast({
       title: "Society Added",

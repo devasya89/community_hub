@@ -1,8 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { Society, useSocieties } from "./SocietyContext";
-
-// The super key - in production this should be stored securely server-side
-const SUPER_ADMIN_KEY = "SOCIETYHUB_SUPER_2024";
+import { Society } from "./SocietyContext";
 
 export type AdminType = "normal" | "super" | null;
 
@@ -13,10 +10,8 @@ interface AdminContextType {
   setAssignedSociety: (society: Society | null) => void;
   selectedAdminSociety: Society | null;
   setSelectedAdminSociety: (society: Society | null) => void;
-  validateSuperKey: (key: string) => boolean;
   logout: () => void;
   canAccessSociety: (societyId: string) => boolean;
-  getAccessibleSocieties: () => Society[];
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -39,18 +34,14 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const setAdminType = (type: AdminType) => {
     setAdminTypeState(type);
-    if (type) {
-      localStorage.setItem("adminType", type);
-    } else {
-      localStorage.removeItem("adminType");
-    }
+    if (type) localStorage.setItem("adminType", type);
+    else localStorage.removeItem("adminType");
   };
 
   const setAssignedSociety = (society: Society | null) => {
     setAssignedSocietyState(society);
     if (society) {
       localStorage.setItem("assignedSociety", JSON.stringify(society));
-      // For normal admin, the selected society is always their assigned society
       setSelectedAdminSociety(society);
     } else {
       localStorage.removeItem("assignedSociety");
@@ -59,15 +50,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const setSelectedAdminSociety = (society: Society | null) => {
     setSelectedAdminSocietyState(society);
-    if (society) {
-      localStorage.setItem("selectedAdminSociety", JSON.stringify(society));
-    } else {
-      localStorage.removeItem("selectedAdminSociety");
-    }
-  };
-
-  const validateSuperKey = (key: string): boolean => {
-    return key === SUPER_ADMIN_KEY;
+    if (society) localStorage.setItem("selectedAdminSociety", JSON.stringify(society));
+    else localStorage.removeItem("selectedAdminSociety");
   };
 
   const logout = () => {
@@ -85,17 +69,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     return false;
   };
 
-  const getAccessibleSocieties = (): Society[] => {
-    // Note: This will be called within the provider tree, so useSocieties is available
-    // For super admin, return all societies; for normal admin, return their assigned society
-    if (adminType === "super") {
-      // We need to get societies from the parent context - this will be handled at component level
-      return [];
-    }
-    if (adminType === "normal" && assignedSociety) return [assignedSociety];
-    return [];
-  };
-
   return (
     <AdminContext.Provider
       value={{
@@ -105,10 +78,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         setAssignedSociety,
         selectedAdminSociety,
         setSelectedAdminSociety,
-        validateSuperKey,
         logout,
         canAccessSociety,
-        getAccessibleSocieties,
       }}
     >
       {children}

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Building2, Shield, LogOut, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSociety } from "@/contexts/SocietyContext";
+import { useAuth } from "@/contexts/AuthContext";
 const navLinks = [
   { href: "/amenities", label: "Amenities" },
   { href: "/events", label: "Events" },
@@ -18,8 +19,10 @@ export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { selectedSociety, isLoggedIn, clearSociety } = useSociety();
+  const { signOut } = useAuth();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOut();
     clearSociety();
     navigate("/");
   };

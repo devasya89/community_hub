@@ -7,16 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useSociety } from "@/contexts/SocietyContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { selectedSociety, setIsLoggedIn, setUserRole } = useSociety();
+  const { signIn } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
 
   if (!selectedSociety) {
@@ -26,18 +25,27 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate login
-    setTimeout(() => {
+
+    const { error } = await signIn(formData.email, formData.password);
+
+    if (error) {
       setIsLoading(false);
-      setIsLoggedIn(true);
-      setUserRole("user");
       toast({
-        title: "Welcome back!",
-        description: `You have successfully logged in to ${selectedSociety.name}.`,
+        title: "Login Failed",
+        description: error.message,
+        variant: "destructive",
       });
-      navigate("/dashboard");
-    }, 1500);
+      return;
+    }
+
+    setIsLoggedIn(true);
+    setUserRole("user");
+    setIsLoading(false);
+    toast({
+      title: "Welcome back!",
+      description: `You have successfully logged in to ${selectedSociety.name}.`,
+    });
+    navigate("/dashboard");
   };
 
   return (
@@ -80,12 +88,8 @@ const Login = () => {
             </div>
           </div>
 
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">
-            Welcome Back
-          </h1>
-          <p className="text-muted-foreground mb-8">
-            Sign in to access your society services.
-          </p>
+          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Welcome Back</h1>
+          <p className="text-muted-foreground mb-8">Sign in to access your society services.</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
