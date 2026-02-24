@@ -9,69 +9,92 @@ import {
   MessageSquare,
   UserCheck,
   TrendingUp,
-  TrendingDown,
   AlertCircle,
   CheckCircle,
+  Loader2,
 } from "lucide-react";
-
-const stats = [
-  {
-    title: "Total Residents",
-    value: "524",
-    change: "+12",
-    changeType: "positive",
-    icon: Users,
-  },
-  {
-    title: "Today's Visitors",
-    value: "18",
-    change: "+5",
-    changeType: "positive",
-    icon: UserCheck,
-  },
-  {
-    title: "Pending Complaints",
-    value: "7",
-    change: "-3",
-    changeType: "positive",
-    icon: MessageSquare,
-  },
-  {
-    title: "Upcoming Events",
-    value: "4",
-    change: "+2",
-    changeType: "neutral",
-    icon: Calendar,
-  },
-];
-
-const recentComplaints = [
-  { id: 1, subject: "Water leakage", flat: "A-101", status: "pending", time: "2 hours ago" },
-  { id: 2, subject: "Parking issue", flat: "B-205", status: "in-progress", time: "5 hours ago" },
-  { id: 3, subject: "Elevator stuck", flat: "C-302", status: "resolved", time: "1 day ago" },
-  { id: 4, subject: "Noise complaint", flat: "D-102", status: "pending", time: "1 day ago" },
-];
-
-const recentVisitors = [
-  { id: 1, name: "John Smith", flat: "A-101", purpose: "Guest", time: "10:30 AM" },
-  { id: 2, name: "Sarah Johnson", flat: "B-205", purpose: "Delivery", time: "11:00 AM" },
-  { id: 3, name: "Mike Williams", flat: "C-302", purpose: "Maintenance", time: "9:45 AM" },
-  { id: 4, name: "Emily Brown", flat: "A-405", purpose: "Family", time: "8:00 AM" },
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminDashboard = () => {
-  const { adminType } = useAdmin();
+  const { adminType, selectedAdminSociety } = useAdmin();
   const isSuperAdmin = adminType === "super";
+  const societyId = selectedAdminSociety?.id;
+
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['admin-dashboard-stats', societyId],
+    queryFn: async () => {
+      const [membersRes, visitorsRes, complaintsRes, eventsRes] = await Promise.all([
+        supabase.from('society_members').select('id', { count: 'exact', head: true }).eq('society_id', societyId!),
+        supabase.from('visitors').select('id', { count: 'exact', head: true }).eq('society_id', societyId!).eq('status', 'checked_in'),
+        supabase.from('complaints').select('id', { count: 'exact', head: true }).eq('society_id', societyId!).in('status', ['open', 'in_progress']),
+        supabase.from('events').select('id', { count: 'exact', head: true }).eq('society_id', societyId!).eq('status', 'upcoming'),
+      ]);
+
+      return {
+        totalResidents: membersRes.count || 0,
+        activeVisitors: visitorsRes.count || 0,
+        pendingComplaints: complaintsRes.count || 0,
+        upcomingEvents: eventsRes.count || 0,
+      };
+    },
+    enabled: !!societyId,
+  });
+
+  const { data: recentComplaints = [] } = useQuery({
+    queryKey: ['admin-dashboard-complaints', societyId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('complaints')
+        .select('id, title, status, created_at')
+        .eq('society_id', societyId!)
+        .order('created_at', { ascending: false })
+        .limit(4);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!societyId,
+  });
+
+  const { data: recentVisitors = [] } = useQuery({
+    queryKey: ['admin-dashboard-visitors', societyId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('visitors')
+        .select('id, visitor_name, purpose, check_in_time')
+        .eq('society_id', societyId!)
+        .order('created_at', { ascending: false })
+        .limit(4);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!societyId,
+  });
+
+  const statCards = [
+    { title: "Total Residents", value: stats?.totalResidents ?? "-", icon: Users },
+    { title: "Active Visitors", value: stats?.activeVisitors ?? "-", icon: UserCheck },
+    { title: "Pending Complaints", value: stats?.pendingComplaints ?? "-", icon: MessageSquare },
+    { title: "Upcoming Events", value: stats?.upcomingEvents ?? "-", icon: Calendar },
+  ];
+
+  const getTimeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins} min ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    return `${Math.floor(hours / 24)} day${Math.floor(hours / 24) > 1 ? 's' : ''} ago`;
+  };
 
   return (
     <AdminLayout>
       <div className="space-y-8">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">Dashboard</h1>
             <p className="text-muted-foreground mt-1">
-              Welcome back! Here's what's happening in your society today.
+              {selectedAdminSociety ? `Overview for ${selectedAdminSociety.name}` : "Welcome back!"}
             </p>
           </div>
           {isSuperAdmin && (
@@ -84,7 +107,7 @@ const AdminDashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
+          {statCards.map((stat, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
@@ -96,25 +119,11 @@ const AdminDashboard = () => {
                 <div className="w-12 h-12 rounded-xl gold-gradient flex items-center justify-center">
                   <stat.icon className="w-6 h-6 text-primary" />
                 </div>
-                <div
-                  className={`flex items-center gap-1 text-sm font-medium ${
-                    stat.changeType === "positive"
-                      ? "text-success"
-                      : stat.changeType === "negative"
-                      ? "text-destructive"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {stat.changeType === "positive" ? (
-                    <TrendingUp className="w-4 h-4" />
-                  ) : stat.changeType === "negative" ? (
-                    <TrendingDown className="w-4 h-4" />
-                  ) : null}
-                  {stat.change}
-                </div>
               </div>
               <p className="text-muted-foreground text-sm">{stat.title}</p>
-              <p className="font-display text-3xl font-bold text-foreground mt-1">{stat.value}</p>
+              <p className="font-display text-3xl font-bold text-foreground mt-1">
+                {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : stat.value}
+              </p>
             </motion.div>
           ))}
         </div>
@@ -129,62 +138,35 @@ const AdminDashboard = () => {
             className="glass-card p-6 rounded-2xl"
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="font-display text-xl font-semibold text-foreground">
-                Recent Complaints
-              </h2>
-              <a href="/admin/complaints" className="text-secondary text-sm hover:underline">
-                View all
-              </a>
+              <h2 className="font-display text-xl font-semibold text-foreground">Recent Complaints</h2>
+              <a href="/admin/complaints" className="text-secondary text-sm hover:underline">View all</a>
             </div>
             <div className="space-y-4">
-              {recentComplaints.map((complaint) => (
-                <div
-                  key={complaint.id}
-                  className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
-                >
+              {recentComplaints.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-4">No complaints yet.</p>
+              ) : recentComplaints.map((complaint) => (
+                <div key={complaint.id} className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
                   <div className="flex items-center gap-4">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        complaint.status === "pending"
-                          ? "bg-warning/20"
-                          : complaint.status === "in-progress"
-                          ? "bg-primary/20"
-                          : "bg-success/20"
-                      }`}
-                    >
-                      {complaint.status === "resolved" ? (
-                        <CheckCircle
-                          className={`w-5 h-5 ${
-                            complaint.status === "resolved" ? "text-success" : ""
-                          }`}
-                        />
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      complaint.status === "open" ? "bg-warning/20" : complaint.status === "in_progress" ? "bg-primary/20" : "bg-success/20"
+                    }`}>
+                      {complaint.status === "resolved" || complaint.status === "closed" ? (
+                        <CheckCircle className="w-5 h-5 text-success" />
                       ) : (
-                        <AlertCircle
-                          className={`w-5 h-5 ${
-                            complaint.status === "pending"
-                              ? "text-warning"
-                              : "text-primary"
-                          }`}
-                        />
+                        <AlertCircle className={`w-5 h-5 ${complaint.status === "open" ? "text-warning" : "text-primary"}`} />
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">{complaint.subject}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {complaint.flat} • {complaint.time}
-                      </p>
+                      <p className="font-medium text-foreground">{complaint.title}</p>
+                      <p className="text-sm text-muted-foreground">{getTimeAgo(complaint.created_at)}</p>
                     </div>
                   </div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                      complaint.status === "pending"
-                        ? "bg-warning/20 text-warning"
-                        : complaint.status === "in-progress"
-                        ? "bg-primary/20 text-primary"
-                        : "bg-success/20 text-success"
-                    }`}
-                  >
-                    {complaint.status.replace("-", " ")}
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
+                    complaint.status === "open" ? "bg-warning/20 text-warning" :
+                    complaint.status === "in_progress" ? "bg-primary/20 text-primary" :
+                    "bg-success/20 text-success"
+                  }`}>
+                    {complaint.status.replace("_", " ")}
                   </span>
                 </div>
               ))}
@@ -199,31 +181,26 @@ const AdminDashboard = () => {
             className="glass-card p-6 rounded-2xl"
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="font-display text-xl font-semibold text-foreground">
-                Today's Visitors
-              </h2>
-              <a href="/admin/visitors" className="text-secondary text-sm hover:underline">
-                View all
-              </a>
+              <h2 className="font-display text-xl font-semibold text-foreground">Recent Visitors</h2>
+              <a href="/admin/visitors" className="text-secondary text-sm hover:underline">View all</a>
             </div>
             <div className="space-y-4">
-              {recentVisitors.map((visitor) => (
-                <div
-                  key={visitor.id}
-                  className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
-                >
+              {recentVisitors.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-4">No visitors yet.</p>
+              ) : recentVisitors.map((visitor) => (
+                <div key={visitor.id} className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-primary font-medium">{visitor.name.charAt(0)}</span>
+                      <span className="text-primary font-medium">{visitor.visitor_name.charAt(0)}</span>
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">{visitor.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {visitor.flat} • {visitor.purpose}
-                      </p>
+                      <p className="font-medium text-foreground">{visitor.visitor_name}</p>
+                      <p className="text-sm text-muted-foreground">{visitor.purpose || "Visitor"}</p>
                     </div>
                   </div>
-                  <span className="text-sm text-muted-foreground">{visitor.time}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {visitor.check_in_time ? new Date(visitor.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-"}
+                  </span>
                 </div>
               ))}
             </div>

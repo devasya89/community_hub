@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SocietyProvider } from "@/contexts/SocietyContext";
 import { AdminProvider } from "@/contexts/AdminContext";
-import { MaintenanceProvider } from "@/contexts/MaintenanceContext";
 import Index from "./pages/Index";
 import SelectSociety from "./pages/SelectSociety";
 import Dashboard from "./pages/Dashboard";
@@ -39,7 +38,6 @@ const App = () => (
       <AuthProvider>
         <SocietyProvider>
           <AdminProvider>
-            <MaintenanceProvider>
               <Toaster />
               <Sonner />
               <BrowserRouter>
@@ -69,7 +67,6 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
-            </MaintenanceProvider>
           </AdminProvider>
         </SocietyProvider>
       </AuthProvider>

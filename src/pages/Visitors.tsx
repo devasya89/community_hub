@@ -1,83 +1,86 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { Search, UserCheck, UserX, Clock, Calendar } from "lucide-react";
+import { Search, UserCheck, UserX, Clock, Calendar, Plus, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { useSociety } from "@/contexts/SocietyContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-
-// Sample visitor data - in production this would come from the society context/database
-const visitorData = [
-  {
-    id: 1,
-    name: "John Smith",
-    purpose: "Family Visit",
-    flatNo: "A-101",
-    checkIn: "10:30 AM",
-    checkOut: "2:00 PM",
-    date: "Dec 28, 2024",
-    status: "checked-out",
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    purpose: "Delivery",
-    flatNo: "B-205",
-    checkIn: "11:00 AM",
-    checkOut: "-",
-    date: "Dec 29, 2024",
-    status: "checked-in",
-  },
-  {
-    id: 3,
-    name: "Mike Williams",
-    purpose: "Guest",
-    flatNo: "C-302",
-    checkIn: "9:45 AM",
-    checkOut: "12:30 PM",
-    date: "Dec 29, 2024",
-    status: "checked-out",
-  },
-  {
-    id: 4,
-    name: "Emily Brown",
-    purpose: "Maintenance",
-    flatNo: "A-405",
-    checkIn: "8:00 AM",
-    checkOut: "-",
-    date: "Dec 29, 2024",
-    status: "checked-in",
-  },
-  {
-    id: 5,
-    name: "David Lee",
-    purpose: "Contractor",
-    flatNo: "D-102",
-    checkIn: "7:30 AM",
-    checkOut: "5:00 PM",
-    date: "Dec 28, 2024",
-    status: "checked-out",
-  },
-];
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const Visitors = () => {
   const { selectedSociety, isLoggedIn } = useSociety();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newVisitor, setNewVisitor] = useState({ name: "", purpose: "", phone: "", expectedDate: "" });
 
   if (!selectedSociety || !isLoggedIn) {
     return <Navigate to="/select-society" replace />;
   }
 
-  const filteredVisitors = visitorData.filter(
+  const { data: visitors = [], isLoading } = useQuery({
+    queryKey: ['visitors', user?.id, selectedSociety.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('visitors')
+        .select('*')
+        .eq('user_id', user!.id)
+        .eq('society_id', selectedSociety.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!selectedSociety,
+  });
+
+  const addVisitor = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('visitors').insert({
+        user_id: user!.id,
+        society_id: selectedSociety.id,
+        visitor_name: newVisitor.name,
+        purpose: newVisitor.purpose,
+        phone: newVisitor.phone,
+        expected_date: newVisitor.expectedDate || null,
+        status: 'expected',
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['visitors'] });
+      toast({ title: "Visitor Added", description: "Visitor has been registered." });
+      setNewVisitor({ name: "", purpose: "", phone: "", expectedDate: "" });
+      setIsDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const filteredVisitors = visitors.filter(
     (visitor) =>
-      visitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      visitor.flatNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      visitor.purpose.toLowerCase().includes(searchTerm.toLowerCase())
+      visitor.visitor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (visitor.purpose || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const checkedInCount = visitorData.filter((v) => v.status === "checked-in").length;
-  const totalToday = visitorData.filter((v) => v.date === "Dec 29, 2024").length;
+  const checkedInCount = visitors.filter((v) => v.status === "checked_in").length;
+  const todayStr = new Date().toISOString().split('T')[0];
+  const totalToday = visitors.filter((v) => v.created_at.startsWith(todayStr)).length;
 
   return (
     <Layout showChatbot>
@@ -136,28 +139,65 @@ const Visitors = () => {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-sm">Total Records</p>
-                  <p className="font-display text-2xl font-bold text-foreground">{visitorData.length}</p>
+                  <p className="font-display text-2xl font-bold text-foreground">{visitors.length}</p>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          {/* Search */}
+          {/* Search + Add */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mb-8"
+            className="mb-8 flex gap-4 items-center"
           >
-            <div className="relative max-w-md">
+            <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
-                placeholder="Search by name, flat, or purpose..."
+                placeholder="Search by name or purpose..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="gold" className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Visitor
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Register Expected Visitor</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label>Visitor Name</Label>
+                    <Input placeholder="John Doe" value={newVisitor.name} onChange={(e) => setNewVisitor({ ...newVisitor, name: e.target.value })} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Purpose</Label>
+                      <Input placeholder="Guest, Delivery..." value={newVisitor.purpose} onChange={(e) => setNewVisitor({ ...newVisitor, purpose: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Phone</Label>
+                      <Input placeholder="+91 98765 43210" value={newVisitor.phone} onChange={(e) => setNewVisitor({ ...newVisitor, phone: e.target.value })} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Expected Date</Label>
+                    <Input type="date" value={newVisitor.expectedDate} onChange={(e) => setNewVisitor({ ...newVisitor, expectedDate: e.target.value })} />
+                  </div>
+                  <Button variant="gold" className="w-full" onClick={() => addVisitor.mutate()} disabled={addVisitor.isPending || !newVisitor.name}>
+                    {addVisitor.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Register Visitor
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </motion.div>
 
           {/* Visitor Table */}
@@ -167,55 +207,66 @@ const Visitors = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="glass-card rounded-2xl overflow-hidden"
           >
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="text-left px-6 py-4 font-medium text-muted-foreground text-sm">Visitor</th>
-                    <th className="text-left px-6 py-4 font-medium text-muted-foreground text-sm">Purpose</th>
-                    <th className="text-left px-6 py-4 font-medium text-muted-foreground text-sm">Flat No.</th>
-                    <th className="text-left px-6 py-4 font-medium text-muted-foreground text-sm">Check In</th>
-                    <th className="text-left px-6 py-4 font-medium text-muted-foreground text-sm">Check Out</th>
-                    <th className="text-left px-6 py-4 font-medium text-muted-foreground text-sm">Date</th>
-                    <th className="text-left px-6 py-4 font-medium text-muted-foreground text-sm">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredVisitors.map((visitor) => (
-                    <tr key={visitor.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-primary font-medium">
-                              {visitor.name.charAt(0)}
-                            </span>
-                          </div>
-                          <span className="font-medium text-foreground">{visitor.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-muted-foreground">{visitor.purpose}</td>
-                      <td className="px-6 py-4 text-foreground font-medium">{visitor.flatNo}</td>
-                      <td className="px-6 py-4 text-muted-foreground">{visitor.checkIn}</td>
-                      <td className="px-6 py-4 text-muted-foreground">{visitor.checkOut}</td>
-                      <td className="px-6 py-4 text-muted-foreground">{visitor.date}</td>
-                      <td className="px-6 py-4">
-                        <Badge
-                          variant={visitor.status === "checked-in" ? "default" : "secondary"}
-                          className={visitor.status === "checked-in" ? "bg-success text-success-foreground" : ""}
-                        >
-                          {visitor.status === "checked-in" ? (
-                            <UserCheck className="w-3 h-3 mr-1" />
-                          ) : (
-                            <UserX className="w-3 h-3 mr-1" />
-                          )}
-                          {visitor.status === "checked-in" ? "Inside" : "Left"}
-                        </Badge>
-                      </td>
+            {isLoading ? (
+              <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="text-left px-6 py-4 font-medium text-muted-foreground text-sm">Visitor</th>
+                      <th className="text-left px-6 py-4 font-medium text-muted-foreground text-sm">Purpose</th>
+                      <th className="text-left px-6 py-4 font-medium text-muted-foreground text-sm">Phone</th>
+                      <th className="text-left px-6 py-4 font-medium text-muted-foreground text-sm">Date</th>
+                      <th className="text-left px-6 py-4 font-medium text-muted-foreground text-sm">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredVisitors.map((visitor) => (
+                      <tr key={visitor.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-primary font-medium">
+                                {visitor.visitor_name.charAt(0)}
+                              </span>
+                            </div>
+                            <span className="font-medium text-foreground">{visitor.visitor_name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-muted-foreground">{visitor.purpose || "-"}</td>
+                        <td className="px-6 py-4 text-muted-foreground">{visitor.phone || "-"}</td>
+                        <td className="px-6 py-4 text-muted-foreground">
+                          {visitor.expected_date ? new Date(visitor.expected_date).toLocaleDateString() : new Date(visitor.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge
+                            variant={visitor.status === "checked_in" ? "default" : "secondary"}
+                            className={visitor.status === "checked_in" ? "bg-success text-success-foreground" : ""}
+                          >
+                            {visitor.status === "checked_in" ? (
+                              <UserCheck className="w-3 h-3 mr-1" />
+                            ) : visitor.status === "checked_out" ? (
+                              <UserX className="w-3 h-3 mr-1" />
+                            ) : (
+                              <Clock className="w-3 h-3 mr-1" />
+                            )}
+                            {visitor.status === "checked_in" ? "Inside" : visitor.status === "checked_out" ? "Left" : "Expected"}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredVisitors.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                          No visitors found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </motion.div>
         </div>
       </section>

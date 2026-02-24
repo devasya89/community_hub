@@ -20,13 +20,12 @@ type LoginMode = "normal" | "super";
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { setAdminType, setAssignedSociety, setSelectedAdminSociety } = useAdmin();
+  const { loginAsAdmin } = useAdmin();
   const { societies } = useSocieties();
   
   const [showPassword, setShowPassword] = useState(false);
   const [showSuperKey, setShowSuperKey] = useState(false);
   const [loginMode, setLoginMode] = useState<LoginMode>("normal");
-  const [selectedSociety, setSelectedSociety] = useState<typeof societies[0] | null>(null);
   
   const [formData, setFormData] = useState({
     email: "",
@@ -38,15 +37,6 @@ const AdminLogin = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (loginMode === "normal" && !selectedSociety) {
-      toast({
-        title: "Society Required",
-        description: "Please select your assigned society to continue.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (loginMode === "super" && !formData.superKey) {
       toast({
         title: "Super Key Required",
@@ -58,37 +48,29 @@ const AdminLogin = () => {
 
     setIsLoading(true);
     
-    // Simulate authentication
-    setTimeout(() => {
-      if (loginMode === "super") {
-        // Simple key validation - in production this would be server-side
-        if (formData.superKey !== "SOCIETYHUB_SUPER_2024") {
-          setIsLoading(false);
-          toast({
-            title: "Invalid Super Key",
-            description: "The super admin key you entered is incorrect.",
-            variant: "destructive",
-          });
-          return;
-        }
-        setAdminType("super");
-        setSelectedAdminSociety(societies[0]); // Default to first society for super admin
-        toast({
-          title: "Welcome, Super Admin!",
-          description: "You have full access to all societies.",
-        });
-      } else {
-        setAdminType("normal");
-        setAssignedSociety(selectedSociety);
-        toast({
-          title: "Welcome, Admin!",
-          description: `You are managing ${selectedSociety?.name}.`,
-        });
-      }
-      
-      setIsLoading(false);
+    const result = await loginAsAdmin(
+      formData.email,
+      formData.password,
+      loginMode === "super" ? formData.superKey : undefined
+    );
+
+    setIsLoading(false);
+
+    if (result.success) {
+      toast({
+        title: loginMode === "super" ? "Welcome, Super Admin!" : "Welcome, Admin!",
+        description: loginMode === "super" 
+          ? "You have full access to all societies." 
+          : "You are now logged in as an admin.",
+      });
       navigate("/admin/dashboard");
-    }, 1500);
+    } else {
+      toast({
+        title: "Login Failed",
+        description: result.error || "Invalid credentials. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -177,46 +159,6 @@ const AdminLogin = () => {
                 </button>
               </div>
             </div>
-
-            {loginMode === "normal" && (
-              <div className="space-y-2">
-                <Label>Assigned Society</Label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full justify-between"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-muted-foreground" />
-                        <span className={selectedSociety ? "text-foreground" : "text-muted-foreground"}>
-                          {selectedSociety?.name || "Select your society"}
-                        </span>
-                      </div>
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-full min-w-[320px]">
-                    {societies.map((society) => (
-                      <DropdownMenuItem
-                        key={society.id}
-                        onClick={() => setSelectedSociety(society)}
-                        className="flex items-center justify-between"
-                      >
-                        <div>
-                          <p className="font-medium">{society.name}</p>
-                          <p className="text-xs text-muted-foreground">{society.address}</p>
-                        </div>
-                        {selectedSociety?.id === society.id && (
-                          <Check className="w-4 h-4 text-primary" />
-                        )}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
 
             {loginMode === "super" && (
               <div className="space-y-2">

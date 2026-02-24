@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { MessageSquare, Send, ThumbsUp, AlertCircle } from "lucide-react";
+import { MessageSquare, Send, ThumbsUp, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +16,10 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSociety } from "@/contexts/SocietyContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const complaintCategories = [
   "Maintenance",
@@ -28,43 +31,24 @@ const complaintCategories = [
   "Other",
 ];
 
-const existingComplaints = [
-  {
-    id: 1,
-    subject: "Water leakage in bathroom",
-    category: "Maintenance",
-    status: "In Progress",
-    date: "Dec 27, 2024",
-    description: "There's a water leak from the ceiling in the master bathroom.",
-  },
-  {
-    id: 2,
-    subject: "Parking spot occupied",
-    category: "Parking",
-    status: "Resolved",
-    date: "Dec 25, 2024",
-    description: "Someone is regularly parking in my designated spot A-15.",
-  },
-  {
-    id: 3,
-    subject: "Elevator not working",
-    category: "Maintenance",
-    status: "Pending",
-    date: "Dec 28, 2024",
-    description: "The elevator in Tower B has been out of service since morning.",
-  },
-];
+const statusMap: Record<string, string> = {
+  open: "Pending",
+  in_progress: "In Progress",
+  resolved: "Resolved",
+  closed: "Closed",
+};
 
 const Complaints = () => {
   const { selectedSociety, isLoggedIn } = useSociety();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const [formData, setFormData] = useState({
-    name: "",
-    flatNo: "",
-    email: "",
     category: "",
     subject: "",
     description: "",
+    priority: "medium",
   });
   const [feedbackData, setFeedbackData] = useState({
     name: "",
@@ -76,20 +60,53 @@ const Complaints = () => {
     return <Navigate to="/select-society" replace />;
   }
 
+  const { data: complaints = [], isLoading } = useQuery({
+    queryKey: ['complaints', user?.id, selectedSociety.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('complaints')
+        .select('*')
+        .eq('user_id', user!.id)
+        .eq('society_id', selectedSociety.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!selectedSociety,
+  });
+
+  const createComplaint = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('complaints').insert({
+        user_id: user!.id,
+        society_id: selectedSociety.id,
+        title: formData.subject,
+        description: formData.description,
+        category: formData.category,
+        priority: formData.priority as any,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['complaints'] });
+      toast({
+        title: "Complaint Submitted",
+        description: "Your complaint has been registered successfully.",
+      });
+      setFormData({ category: "", subject: "", description: "", priority: "medium" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const handleComplaintSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Complaint Submitted",
-      description: "Your complaint has been registered successfully. We'll get back to you soon.",
-    });
-    setFormData({
-      name: "",
-      flatNo: "",
-      email: "",
-      category: "",
-      subject: "",
-      description: "",
-    });
+    if (!formData.subject || !formData.description || !formData.category) {
+      toast({ title: "Error", description: "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+    createComplaint.mutate();
   };
 
   const handleFeedbackSubmit = (e: React.FormEvent) => {
@@ -98,11 +115,7 @@ const Complaints = () => {
       title: "Thank You!",
       description: "Your feedback has been submitted successfully.",
     });
-    setFeedbackData({
-      name: "",
-      rating: "",
-      feedback: "",
-    });
+    setFeedbackData({ name: "", rating: "", feedback: "" });
   };
 
   return (
@@ -152,40 +165,6 @@ const Complaints = () => {
                   <form onSubmit={handleComplaintSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input
-                          id="name"
-                          placeholder="Enter your name"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="flatNo">Flat Number</Label>
-                        <Input
-                          id="flatNo"
-                          placeholder="e.g., A-101"
-                          value={formData.flatNo}
-                          onChange={(e) => setFormData({ ...formData, flatNo: e.target.value })}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="your@email.com"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
                         <Label>Category</Label>
                         <Select
                           value={formData.category}
@@ -200,6 +179,23 @@ const Complaints = () => {
                                 {cat}
                               </SelectItem>
                             ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Priority</Label>
+                        <Select
+                          value={formData.priority}
+                          onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select priority" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="urgent">Urgent</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -228,8 +224,8 @@ const Complaints = () => {
                       />
                     </div>
 
-                    <Button type="submit" variant="gold" size="lg" className="w-full gap-2">
-                      <Send className="w-4 h-4" />
+                    <Button type="submit" variant="gold" size="lg" className="w-full gap-2" disabled={createComplaint.isPending}>
+                      {createComplaint.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       Submit Complaint
                     </Button>
                   </form>
@@ -248,7 +244,6 @@ const Complaints = () => {
                         onChange={(e) => setFeedbackData({ ...feedbackData, name: e.target.value })}
                       />
                     </div>
-
                     <div className="space-y-2">
                       <Label>Overall Rating</Label>
                       <Select
@@ -267,7 +262,6 @@ const Complaints = () => {
                         </SelectContent>
                       </Select>
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="feedbackText">Your Feedback</Label>
                       <Textarea
@@ -279,7 +273,6 @@ const Complaints = () => {
                         required
                       />
                     </div>
-
                     <Button type="submit" variant="gold" size="lg" className="w-full gap-2">
                       <ThumbsUp className="w-4 h-4" />
                       Submit Feedback
@@ -290,38 +283,54 @@ const Complaints = () => {
 
               <TabsContent value="history">
                 <div className="space-y-4">
-                  {existingComplaints.map((complaint) => (
-                    <div key={complaint.id} className="glass-card p-6 rounded-2xl">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-display text-lg font-semibold text-foreground">
-                              {complaint.subject}
-                            </h3>
-                            <span
-                              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                complaint.status === "Resolved"
-                                  ? "bg-success/20 text-success"
-                                  : complaint.status === "In Progress"
-                                  ? "bg-warning/20 text-warning"
-                                  : "bg-muted text-muted-foreground"
-                              }`}
-                            >
-                              {complaint.status}
-                            </span>
-                          </div>
-                          <p className="text-muted-foreground text-sm mb-2">
-                            {complaint.description}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>Category: {complaint.category}</span>
-                            <span>•</span>
-                            <span>{complaint.date}</span>
+                  {isLoading ? (
+                    <div className="glass-card p-8 rounded-2xl text-center">
+                      <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+                    </div>
+                  ) : complaints.length === 0 ? (
+                    <div className="glass-card p-8 rounded-2xl text-center text-muted-foreground">
+                      No complaints found. File one to get started.
+                    </div>
+                  ) : (
+                    complaints.map((complaint) => (
+                      <div key={complaint.id} className="glass-card p-6 rounded-2xl">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="font-display text-lg font-semibold text-foreground">
+                                {complaint.title}
+                              </h3>
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                  complaint.status === "resolved"
+                                    ? "bg-success/20 text-success"
+                                    : complaint.status === "in_progress"
+                                    ? "bg-warning/20 text-warning"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                {statusMap[complaint.status] || complaint.status}
+                              </span>
+                            </div>
+                            <p className="text-muted-foreground text-sm mb-2">
+                              {complaint.description}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span>Category: {complaint.category}</span>
+                              <span>•</span>
+                              <span>{new Date(complaint.created_at).toLocaleDateString()}</span>
+                            </div>
+                            {complaint.admin_response && (
+                              <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/10">
+                                <p className="text-xs font-semibold text-primary mb-1">Admin Response:</p>
+                                <p className="text-sm text-muted-foreground">{complaint.admin_response}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
