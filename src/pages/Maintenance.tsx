@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -14,12 +14,13 @@ import {
   Wallet,
   Building,
   Banknote,
+  Loader2,
 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useSociety } from "@/contexts/SocietyContext";
-import { useMaintenance, MaintenanceRecord } from "@/contexts/MaintenanceContext";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+interface MaintenanceCategory {
+  name: string;
+  amount: number;
+}
 
 const paymentMethods = [
   { value: "UPI", label: "UPI", icon: Wallet },
@@ -46,29 +54,67 @@ const paymentMethods = [
 const Maintenance = () => {
   const navigate = useNavigate();
   const { selectedSociety, isLoggedIn } = useSociety();
-  const { getRecordsBySociety, payMaintenance } = useMaintenance();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [payDialogOpen, setPayDialogOpen] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<MaintenanceRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [filter, setFilter] = useState<"all" | "paid" | "pending" | "overdue">("all");
 
-  useEffect(() => {
-    if (!isLoggedIn || !selectedSociety) {
-      navigate("/select-society");
-    }
-  }, [isLoggedIn, selectedSociety, navigate]);
+  if (!isLoggedIn || !selectedSociety) {
+    navigate("/select-society");
+    return null;
+  }
 
-  if (!selectedSociety) return null;
+  const { data: records = [], isLoading } = useQuery({
+    queryKey: ['maintenance', user?.id, selectedSociety.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('maintenance_records')
+        .select('*')
+        .eq('user_id', user!.id)
+        .eq('society_id', selectedSociety.id)
+        .order('due_date', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!selectedSociety,
+  });
 
-  const records = getRecordsBySociety(selectedSociety.id);
+  const payMutation = useMutation({
+    mutationFn: async ({ recordId, method }: { recordId: string; method: string }) => {
+      const receiptNumber = `RCP-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const { error } = await supabase
+        .from('maintenance_records')
+        .update({
+          status: 'paid' as any,
+          payment_date: new Date().toISOString().split('T')[0],
+          payment_method: method,
+          receipt_number: receiptNumber,
+        })
+        .eq('id', recordId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+      toast({ title: "Payment Successful!", description: `Payment recorded successfully.` });
+      setPayDialogOpen(false);
+      setSelectedRecord(null);
+      setPaymentMethod("");
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const filtered = filter === "all" ? records : records.filter(r => r.status === filter);
 
   const totalDue = records
     .filter(r => r.status !== "paid")
-    .reduce((sum, r) => sum + r.amount + r.penalty, 0);
+    .reduce((sum, r) => sum + Number(r.amount) + Number(r.penalty), 0);
 
   const paidCount = records.filter(r => r.status === "paid").length;
   const pendingCount = records.filter(r => r.status === "pending").length;
@@ -79,11 +125,7 @@ const Maintenance = () => {
       toast({ title: "Error", description: "Please select a payment method", variant: "destructive" });
       return;
     }
-    payMaintenance(selectedRecord.id, paymentMethod);
-    toast({ title: "Payment Successful!", description: `₹${selectedRecord.amount + selectedRecord.penalty} paid via ${paymentMethod}` });
-    setPayDialogOpen(false);
-    setSelectedRecord(null);
-    setPaymentMethod("");
+    payMutation.mutate({ recordId: selectedRecord.id, method: paymentMethod });
   };
 
   const getStatusConfig = (status: string) => {
@@ -94,6 +136,23 @@ const Maintenance = () => {
       default: return { color: "bg-muted text-muted-foreground", icon: Clock };
     }
   };
+
+  const getCategories = (record: any): MaintenanceCategory[] => {
+    try {
+      if (Array.isArray(record.categories)) return record.categories;
+      return [];
+    } catch { return []; }
+  };
+
+  if (isLoading) {
+    return (
+      <Layout showFooter={false}>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout showFooter={false} showChatbot>
@@ -129,13 +188,7 @@ const Maintenance = () => {
           {/* Filter Tabs */}
           <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
             {(["all", "pending", "overdue", "paid"] as const).map(f => (
-              <Button
-                key={f}
-                variant={filter === f ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilter(f)}
-                className="capitalize whitespace-nowrap"
-              >
+              <Button key={f} variant={filter === f ? "default" : "outline"} size="sm" onClick={() => setFilter(f)} className="capitalize whitespace-nowrap">
                 {f}
               </Button>
             ))}
@@ -148,6 +201,10 @@ const Maintenance = () => {
                 const statusConfig = getStatusConfig(record.status);
                 const StatusIcon = statusConfig.icon;
                 const isExpanded = expandedId === record.id;
+                const categories = getCategories(record);
+                const amount = Number(record.amount);
+                const penalty = Number(record.penalty);
+
                 return (
                   <motion.div
                     key={record.id}
@@ -156,10 +213,7 @@ const Maintenance = () => {
                     transition={{ delay: 0.1 + index * 0.05 }}
                     className="glass-card rounded-xl border border-border/50 overflow-hidden"
                   >
-                    <div
-                      className="p-4 cursor-pointer"
-                      onClick={() => setExpandedId(isExpanded ? null : record.id)}
-                    >
+                    <div className="p-4 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : record.id)}>
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-primary" />
@@ -175,44 +229,42 @@ const Maintenance = () => {
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-xs text-muted-foreground">Unit: {record.unitNumber}</p>
-                          <p className="text-xs text-muted-foreground">Due: {record.dueDate}</p>
+                          <p className="text-xs text-muted-foreground">Unit: {record.unit_number}</p>
+                          <p className="text-xs text-muted-foreground">Due: {new Date(record.due_date).toLocaleDateString()}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-lg font-bold text-foreground flex items-center gap-0.5">
-                            <IndianRupee className="w-4 h-4" />{record.amount.toLocaleString()}
+                            <IndianRupee className="w-4 h-4" />{amount.toLocaleString()}
                           </p>
-                          {record.penalty > 0 && (
-                            <p className="text-xs text-destructive">+ ₹{record.penalty} penalty</p>
-                          )}
+                          {penalty > 0 && <p className="text-xs text-destructive">+ ₹{penalty} penalty</p>}
                         </div>
                       </div>
                     </div>
 
                     {isExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        className="border-t border-border/50 px-4 pb-4"
-                      >
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-3 mb-2">Category Breakdown</p>
-                        <div className="space-y-1.5 mb-3">
-                          {record.categories.map((cat, i) => (
-                            <div key={i} className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">{cat.name}</span>
-                              <span className="text-foreground font-medium">₹{cat.amount.toLocaleString()}</span>
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="border-t border-border/50 px-4 pb-4">
+                        {categories.length > 0 && (
+                          <>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-3 mb-2">Category Breakdown</p>
+                            <div className="space-y-1.5 mb-3">
+                              {categories.map((cat, i) => (
+                                <div key={i} className="flex justify-between text-sm">
+                                  <span className="text-muted-foreground">{cat.name}</span>
+                                  <span className="text-foreground font-medium">₹{cat.amount.toLocaleString()}</span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                          {record.penalty > 0 && (
-                            <div className="flex justify-between text-sm border-t border-border/50 pt-1.5">
-                              <span className="text-destructive">Late Penalty</span>
-                              <span className="text-destructive font-medium">₹{record.penalty.toLocaleString()}</span>
-                            </div>
-                          )}
-                          <div className="flex justify-between text-sm border-t border-border pt-1.5 font-bold">
-                            <span className="text-foreground">Total</span>
-                            <span className="text-foreground">₹{(record.amount + record.penalty).toLocaleString()}</span>
+                          </>
+                        )}
+                        {penalty > 0 && (
+                          <div className="flex justify-between text-sm border-t border-border/50 pt-1.5 mb-1.5">
+                            <span className="text-destructive">Late Penalty</span>
+                            <span className="text-destructive font-medium">₹{penalty.toLocaleString()}</span>
                           </div>
+                        )}
+                        <div className="flex justify-between text-sm border-t border-border pt-1.5 font-bold mb-3">
+                          <span className="text-foreground">Total</span>
+                          <span className="text-foreground">₹{(amount + penalty).toLocaleString()}</span>
                         </div>
 
                         {record.status === "paid" ? (
@@ -220,9 +272,9 @@ const Maintenance = () => {
                             <div className="flex items-center gap-2 text-emerald-600 text-sm font-semibold mb-1">
                               <Receipt className="w-4 h-4" /> Payment Details
                             </div>
-                            <p className="text-xs text-muted-foreground">Receipt: {record.receiptNumber}</p>
-                            <p className="text-xs text-muted-foreground">Date: {record.paymentDate}</p>
-                            <p className="text-xs text-muted-foreground">Method: {record.paymentMethod}</p>
+                            <p className="text-xs text-muted-foreground">Receipt: {record.receipt_number}</p>
+                            <p className="text-xs text-muted-foreground">Date: {record.payment_date ? new Date(record.payment_date).toLocaleDateString() : "-"}</p>
+                            <p className="text-xs text-muted-foreground">Method: {record.payment_method}</p>
                           </div>
                         ) : (
                           <Button
@@ -235,7 +287,7 @@ const Maintenance = () => {
                             }}
                           >
                             <IndianRupee className="w-4 h-4" />
-                            Pay ₹{(record.amount + record.penalty).toLocaleString()}
+                            Pay ₹{(amount + penalty).toLocaleString()}
                           </Button>
                         )}
                       </motion.div>
@@ -268,21 +320,21 @@ const Maintenance = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Unit</span>
-                  <span className="font-medium text-foreground">{selectedRecord.unitNumber}</span>
+                  <span className="font-medium text-foreground">{selectedRecord.unit_number}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Amount</span>
-                  <span className="font-medium text-foreground">₹{selectedRecord.amount.toLocaleString()}</span>
+                  <span className="font-medium text-foreground">₹{Number(selectedRecord.amount).toLocaleString()}</span>
                 </div>
-                {selectedRecord.penalty > 0 && (
+                {Number(selectedRecord.penalty) > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-destructive">Penalty</span>
-                    <span className="text-destructive font-medium">₹{selectedRecord.penalty.toLocaleString()}</span>
+                    <span className="text-destructive font-medium">₹{Number(selectedRecord.penalty).toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm border-t border-border pt-2 font-bold">
                   <span>Total</span>
-                  <span>₹{(selectedRecord.amount + selectedRecord.penalty).toLocaleString()}</span>
+                  <span>₹{(Number(selectedRecord.amount) + Number(selectedRecord.penalty)).toLocaleString()}</span>
                 </div>
               </div>
 
@@ -305,8 +357,8 @@ const Maintenance = () => {
                 </Select>
               </div>
 
-              <Button variant="gold" className="w-full gap-2" onClick={handlePay}>
-                <IndianRupee className="w-4 h-4" />
+              <Button variant="gold" className="w-full gap-2" onClick={handlePay} disabled={payMutation.isPending}>
+                {payMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <IndianRupee className="w-4 h-4" />}
                 Confirm Payment
               </Button>
             </div>
