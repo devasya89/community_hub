@@ -30,6 +30,7 @@ const AdminLogin = () => {
     password: "",
     confirmPassword: "",
     superKey: "",
+    adminSignupKey: "",
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -61,6 +62,13 @@ const AdminLogin = () => {
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (formData.adminSignupKey !== "societyyhubb") {
+      toast({ title: "Invalid Key", description: "The admin signup key is incorrect.", variant: "destructive" });
+      return;
+    }
+
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
@@ -157,9 +165,17 @@ const AdminLogin = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name & Phone - only for sign up */}
+            {/* Admin Signup Key & fields - only for sign up */}
             {authMode === "signup" && (
               <>
+                <div className="space-y-2">
+                  <Label htmlFor="adminSignupKey">Admin Signup Key</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input id="adminSignupKey" type="password" placeholder="Enter admin signup key" className="pl-10" value={formData.adminSignupKey} onChange={(e) => setFormData({ ...formData, adminSignupKey: e.target.value })} required />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Contact your super admin to get this key.</p>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
                   <div className="relative">
