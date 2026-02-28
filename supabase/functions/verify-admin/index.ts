@@ -31,10 +31,26 @@ serve(async (req) => {
     )
 
     if (req.method === 'POST') {
-      const { superKey } = await req.json()
-      const SUPER_KEY = 'SOCIETYHUB_SUPER_2024'
+      const body = await req.json()
+      const { superKey, action } = body
 
-      if (superKey === SUPER_KEY) {
+      // Super admin verification with super key
+      if (superKey) {
+        const SUPER_KEY = 'SOCIETY_HUB_2026'
+
+        if (superKey !== SUPER_KEY) {
+          return new Response(JSON.stringify({ error: 'Invalid super key' }), {
+            status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+
+        // Check if this is the designated super admin email
+        if (user.email !== 'icoc7772@gmail.com') {
+          return new Response(JSON.stringify({ error: 'This email is not authorized as super admin' }), {
+            status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+
         const { data: existingRole } = await serviceClient
           .from('user_roles')
           .select('id')
@@ -52,9 +68,13 @@ serve(async (req) => {
         return new Response(JSON.stringify({ role: 'super_admin', society: null }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
-      } else {
-        return new Response(JSON.stringify({ error: 'Invalid super key' }), {
-          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+
+      // Normal admin registration - assign admin role (requires super admin approval later)
+      if (action === 'register_admin') {
+        // Just check they authenticated successfully - role assignment is done by super admin
+        return new Response(JSON.stringify({ success: true, message: 'Account created. Contact super admin for admin role assignment.' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
     }
