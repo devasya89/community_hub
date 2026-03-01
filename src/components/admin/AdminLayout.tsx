@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 import { AdminMobileBottomNav } from "@/components/layout/MobileBottomNav";
 
 const sidebarLinks = [
@@ -50,50 +52,13 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-const notifications = [
-  {
-    id: 1,
-    title: "New Complaint",
-    message: "A new complaint has been submitted by Unit A-101",
-    time: "5 min ago",
-    unread: true
-  },
-  {
-    id: 2,
-    title: "Visitor Arrived",
-    message: "Delivery person at gate for Unit B-205",
-    time: "15 min ago",
-    unread: true
-  },
-  {
-    id: 3,
-    title: "Event Reminder",
-    message: "Annual General Meeting tomorrow at 6 PM",
-    time: "1 hour ago",
-    unread: false
-  },
-  {
-    id: 4,
-    title: "Maintenance Update",
-    message: "Elevator maintenance completed successfully",
-    time: "2 hours ago",
-    unread: false
-  },
-  {
-    id: 5,
-    title: "New Registration",
-    message: "New user registration request from Unit C-302",
-    time: "3 hours ago",
-    unread: false
-  }
-];
-
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { clearSociety } = useSociety();
   const { societies } = useSocieties();
+  const queryClient = useQueryClient();
   const { 
     adminType, 
     selectedAdminSociety, 
@@ -102,7 +67,39 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     logout 
   } = useAdmin();
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications', selectedAdminSociety?.id],
+    queryFn: async () => {
+      if (!selectedAdminSociety) return [];
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('society_id', selectedAdminSociety.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedAdminSociety,
+    refetchInterval: 30000,
+  });
+
+  const markAsRead = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  const markAllRead = useMutation({
+    mutationFn: async () => {
+      if (!selectedAdminSociety) return;
+      await supabase.from('notifications').update({ is_read: true }).eq('society_id', selectedAdminSociety.id).eq('is_read', false);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  const unreadCount = notifications.filter((n: any) => !n.is_read).length;
   
   // Get accessible societies based on admin type
   const accessibleSocieties = adminType === "super" 
@@ -265,23 +262,26 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <DropdownMenuLabel className="flex items-center justify-between">
                     <span>Notifications</span>
                     {unreadCount > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {unreadCount} new
-                      </Badge>
+                      <Button variant="ghost" size="sm" className="text-xs h-auto p-1" onClick={() => markAllRead.mutate()}>
+                        Mark all read
+                      </Button>
                     )}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <ScrollArea className="h-[300px]">
-                    {notifications.map((notification) => (
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-muted-foreground">No notifications</div>
+                    ) : notifications.map((notification) => (
                       <DropdownMenuItem 
                         key={notification.id} 
                         className="flex flex-col items-start p-3 cursor-pointer focus:bg-muted"
+                        onClick={() => !notification.is_read && markAsRead.mutate(notification.id)}
                       >
                         <div className="flex items-start justify-between w-full gap-2">
-                          <span className={`font-medium text-sm ${notification.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          <span className={`font-medium text-sm ${!notification.is_read ? 'text-foreground' : 'text-muted-foreground'}`}>
                             {notification.title}
                           </span>
-                          {notification.unread && (
+                          {!notification.is_read && (
                             <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1" />
                           )}
                         </div>
@@ -289,15 +289,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                           {notification.message}
                         </p>
                         <span className="text-xs text-muted-foreground/70 mt-1">
-                          {notification.time}
+                          {new Date(notification.created_at).toLocaleString()}
                         </span>
                       </DropdownMenuItem>
                     ))}
                   </ScrollArea>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="justify-center text-primary text-sm">
-                    View all notifications
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
