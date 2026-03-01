@@ -87,20 +87,48 @@ const Maintenance = () => {
   const payMutation = useMutation({
     mutationFn: async ({ recordId, method }: { recordId: string; method: string }) => {
       const receiptNumber = `RCP-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const paymentDate = new Date().toISOString().split('T')[0];
       const { error } = await supabase
         .from('maintenance_records')
         .update({
           status: 'paid' as any,
-          payment_date: new Date().toISOString().split('T')[0],
+          payment_date: paymentDate,
           payment_method: method,
           receipt_number: receiptNumber,
         })
         .eq('id', recordId);
       if (error) throw error;
+      return { receiptNumber, paymentDate, method };
     },
-    onSuccess: () => {
+    onSuccess: async (result) => {
       queryClient.invalidateQueries({ queryKey: ['maintenance'] });
-      toast({ title: "Payment Successful!", description: `Payment recorded successfully.` });
+      toast({ title: "Payment Successful!", description: "Payment recorded. Sending invoice to your email..." });
+
+      // Send invoice email
+      if (selectedRecord && user?.email) {
+        const categories = getCategories(selectedRecord);
+        try {
+          await supabase.functions.invoke('send-maintenance-invoice', {
+            body: {
+              recipientEmail: user.email,
+              recipientName: selectedRecord.resident_name,
+              societyName: selectedSociety?.name || '',
+              unitNumber: selectedRecord.unit_number,
+              month: selectedRecord.month,
+              amount: Number(selectedRecord.amount),
+              penalty: Number(selectedRecord.penalty),
+              categories,
+              paymentMethod: result.method,
+              paymentDate: new Date(result.paymentDate).toLocaleDateString('en-IN'),
+              receiptNumber: result.receiptNumber,
+            },
+          });
+          toast({ title: "Invoice Sent!", description: "Invoice has been sent to your email." });
+        } catch {
+          toast({ title: "Invoice email failed", description: "Payment was recorded but invoice email could not be sent.", variant: "destructive" });
+        }
+      }
+
       setPayDialogOpen(false);
       setSelectedRecord(null);
       setPaymentMethod("");
