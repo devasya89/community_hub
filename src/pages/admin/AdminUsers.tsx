@@ -140,26 +140,33 @@ const AdminUsers = () => {
                       <td className="px-6 py-4 font-medium text-foreground">{user.unitNumber}</td>
                       <td className="px-6 py-4 text-muted-foreground">{user.phone}</td>
                       <td className="px-6 py-4">
-                        <Badge variant={user.isActive ? "default" : "secondary"} className={user.isActive ? "bg-success text-success-foreground" : ""}>
-                          {user.isActive ? "active" : "inactive"}
+                        <Badge 
+                          variant={!user.isMember ? "outline" : user.isActive ? "default" : "secondary"} 
+                          className={user.isMember && user.isActive ? "bg-success text-success-foreground" : ""}
+                        >
+                          {!user.isMember ? "not joined" : user.isActive ? "active" : "inactive"}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                              <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => toggleStatus.mutate({ id: user.id, isActive: user.isActive })}>
-                              <Edit className="w-4 h-4 mr-2" /> Toggle Status
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => removeMember.mutate(user.id)}>
-                              <Trash2 className="w-4 h-4 mr-2" /> Remove
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {user.isMember ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                                <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => toggleStatus.mutate({ id: user.id, isActive: user.isActive! })}>
+                                <Edit className="w-4 h-4 mr-2" /> Toggle Status
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={() => removeMember.mutate(user.id)}>
+                                <Trash2 className="w-4 h-4 mr-2" /> Remove from Society
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">No membership</span>
+                        )}
                       </td>
                     </tr>
                   ))}
