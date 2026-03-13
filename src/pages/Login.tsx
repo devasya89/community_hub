@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Building2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,34 @@ const Login = () => {
         variant: "destructive",
       });
       return;
+    }
+
+    // After successful login, check if user has a society membership for the selected society
+    // If not, try to create one from their signup metadata
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && selectedSociety) {
+        const { data: existingMembership } = await supabase
+          .from('society_members')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('society_id', selectedSociety.id)
+          .maybeSingle();
+
+        if (!existingMembership) {
+          const meta = user.user_metadata;
+          const unitNumber = meta?.unit_number || '';
+          if (meta?.society_id === selectedSociety.id && unitNumber) {
+            await supabase.from('society_members').insert({
+              user_id: user.id,
+              society_id: selectedSociety.id,
+              unit_number: unitNumber,
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error checking/creating membership:', err);
     }
 
     setIsLoggedIn(true);

@@ -48,6 +48,8 @@ const Register = () => {
     const { error } = await signUp(formData.email, formData.password, {
       full_name: formData.name,
       phone: formData.phone,
+      society_id: selectedSociety.id,
+      unit_number: formData.flatNo,
     });
 
     if (error) {
