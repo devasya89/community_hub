@@ -26,29 +26,33 @@ const AdminUsers = () => {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-users', societyId],
     queryFn: async () => {
-      const { data: members, error } = await supabase
+      // Fetch all profiles (all registered users)
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, phone, created_at');
+      if (profilesError) throw profilesError;
+
+      // Fetch society members for the selected society
+      const { data: members } = await supabase
         .from('society_members')
         .select('*')
         .eq('society_id', societyId!);
-      if (error) throw error;
 
-      const userIds = members.map(m => m.user_id);
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, phone')
-        .in('id', userIds);
+      const memberMap = new Map(members?.map(m => [m.user_id, m]) || []);
 
-      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-
-      return members.map(m => ({
-        id: m.id,
-        userId: m.user_id,
-        unitNumber: m.unit_number,
-        isActive: m.is_active,
-        joinedAt: m.joined_at,
-        name: profileMap.get(m.user_id)?.full_name || 'Unknown',
-        phone: profileMap.get(m.user_id)?.phone || '-',
-      }));
+      return (profiles || []).map(p => {
+        const membership = memberMap.get(p.id);
+        return {
+          id: membership?.id || p.id,
+          userId: p.id,
+          unitNumber: membership?.unit_number || '-',
+          isActive: membership?.is_active ?? null,
+          joinedAt: membership?.joined_at || p.created_at,
+          name: p.full_name || 'Unknown',
+          phone: p.phone || '-',
+          isMember: !!membership,
+        };
+      });
     },
     enabled: !!societyId,
   });
@@ -136,26 +140,33 @@ const AdminUsers = () => {
                       <td className="px-6 py-4 font-medium text-foreground">{user.unitNumber}</td>
                       <td className="px-6 py-4 text-muted-foreground">{user.phone}</td>
                       <td className="px-6 py-4">
-                        <Badge variant={user.isActive ? "default" : "secondary"} className={user.isActive ? "bg-success text-success-foreground" : ""}>
-                          {user.isActive ? "active" : "inactive"}
+                        <Badge 
+                          variant={!user.isMember ? "outline" : user.isActive ? "default" : "secondary"} 
+                          className={user.isMember && user.isActive ? "bg-success text-success-foreground" : ""}
+                        >
+                          {!user.isMember ? "not joined" : user.isActive ? "active" : "inactive"}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                              <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => toggleStatus.mutate({ id: user.id, isActive: user.isActive })}>
-                              <Edit className="w-4 h-4 mr-2" /> Toggle Status
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => removeMember.mutate(user.id)}>
-                              <Trash2 className="w-4 h-4 mr-2" /> Remove
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {user.isMember ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                                <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => toggleStatus.mutate({ id: user.id, isActive: user.isActive! })}>
+                                <Edit className="w-4 h-4 mr-2" /> Toggle Status
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={() => removeMember.mutate(user.id)}>
+                                <Trash2 className="w-4 h-4 mr-2" /> Remove from Society
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">No membership</span>
+                        )}
                       </td>
                     </tr>
                   ))}
