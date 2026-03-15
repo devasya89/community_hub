@@ -53,14 +53,12 @@ const Login = () => {
 
         if (!existingMembership) {
           const meta = user.user_metadata;
-          const unitNumber = meta?.unit_number || '';
-          if (meta?.society_id === selectedSociety.id && unitNumber) {
-            await supabase.from('society_members').insert({
-              user_id: user.id,
-              society_id: selectedSociety.id,
-              unit_number: unitNumber,
-            });
-          }
+          const unitNumber = meta?.unit_number || 'Not Assigned';
+          await supabase.from('society_members').insert({
+            user_id: user.id,
+            society_id: selectedSociety.id,
+            unit_number: unitNumber,
+          });
         }
       }
     } catch (err) {
