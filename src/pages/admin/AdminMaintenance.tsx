@@ -2,33 +2,21 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import {
-  IndianRupee,
-  Search,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  Download,
-  Filter,
-  TrendingUp,
-  Users,
-  Building2,
-  Loader2,
+  IndianRupee, Search, CheckCircle2, Clock, AlertTriangle,
+  Filter, TrendingUp, Users, Building2, Loader2, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useSocieties } from "@/contexts/SocietyContext";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { CreateMaintenanceDialog } from "@/components/admin/CreateMaintenanceDialog";
 
 const AdminMaintenance = () => {
   const { adminType, selectedAdminSociety } = useAdmin();
@@ -48,9 +36,7 @@ const AdminMaintenance = () => {
     queryKey: ['admin-maintenance', effectiveSocietyId, adminType],
     queryFn: async () => {
       let query = supabase.from('maintenance_records').select('*').order('due_date', { ascending: false });
-      if (effectiveSocietyId) {
-        query = query.eq('society_id', effectiveSocietyId);
-      }
+      if (effectiveSocietyId) query = query.eq('society_id', effectiveSocietyId);
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -61,21 +47,32 @@ const AdminMaintenance = () => {
   const markPaid = useMutation({
     mutationFn: async (recordId: string) => {
       const receiptNumber = `RCP-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      const { error } = await supabase
-        .from('maintenance_records')
-        .update({
-          status: 'paid' as any,
-          payment_date: new Date().toISOString().split('T')[0],
-          payment_method: 'Admin Override',
-          receipt_number: receiptNumber,
-        })
-        .eq('id', recordId);
+      const { error } = await supabase.from('maintenance_records').update({
+        status: 'paid' as any,
+        payment_date: new Date().toISOString().split('T')[0],
+        payment_method: 'Admin Override',
+        receipt_number: receiptNumber,
+      }).eq('id', recordId);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-maintenance'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] });
       toast({ title: "Marked as Paid" });
     },
+  });
+
+  const deleteRecord = useMutation({
+    mutationFn: async (recordId: string) => {
+      const { error } = await supabase.from('maintenance_records').delete().eq('id', recordId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-maintenance'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+      toast({ title: "Record deleted" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
   const filteredRecords = records.filter(r => {
@@ -124,6 +121,11 @@ const AdminMaintenance = () => {
               {adminType === "super" ? "All societies maintenance overview" : `Maintenance for ${selectedAdminSociety?.name}`}
             </p>
           </div>
+          <CreateMaintenanceDialog
+            societies={societies}
+            adminType={adminType}
+            selectedSocietyId={selectedAdminSociety?.id}
+          />
         </div>
 
         {/* Stats */}
@@ -239,13 +241,29 @@ const AdminMaintenance = () => {
                           </Badge>
                         </td>
                         <td className="p-4">
-                          {record.status !== "paid" ? (
-                            <Button size="sm" variant="outline" onClick={() => markPaid.mutate(record.id)} disabled={markPaid.isPending}>
-                              Mark Paid
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">{record.payment_method}</span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {record.status !== "paid" ? (
+                              <Button size="sm" variant="outline" onClick={() => markPaid.mutate(record.id)} disabled={markPaid.isPending}>
+                                Mark Paid
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">{record.payment_method}</span>
+                            )}
+                            {adminType === "super" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  if (confirm("Delete this maintenance record?")) {
+                                    deleteRecord.mutate(record.id);
+                                  }
+                                }}
+                                disabled={deleteRecord.isPending}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
