@@ -61,7 +61,7 @@ const Register = () => {
     setIsLoading(false);
     toast({
       title: "Account Created!",
-      description: "Please check your email to verify your account before logging in.",
+      description: "Your account has been created successfully. You can now log in.",
     });
     navigate("/login");
   };
