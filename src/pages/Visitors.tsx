@@ -161,43 +161,6 @@ const Visitors = () => {
                 className="pl-10"
               />
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="gold" className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Add Visitor
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Register Expected Visitor</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label>Visitor Name</Label>
-                    <Input placeholder="John Doe" value={newVisitor.name} onChange={(e) => setNewVisitor({ ...newVisitor, name: e.target.value })} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Purpose</Label>
-                      <Input placeholder="Guest, Delivery..." value={newVisitor.purpose} onChange={(e) => setNewVisitor({ ...newVisitor, purpose: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Phone</Label>
-                      <Input placeholder="+91 98765 43210" value={newVisitor.phone} onChange={(e) => setNewVisitor({ ...newVisitor, phone: e.target.value })} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Expected Date</Label>
-                    <Input type="date" value={newVisitor.expectedDate} onChange={(e) => setNewVisitor({ ...newVisitor, expectedDate: e.target.value })} />
-                  </div>
-                  <Button variant="gold" className="w-full" onClick={() => addVisitor.mutate()} disabled={addVisitor.isPending || !newVisitor.name}>
-                    {addVisitor.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                    Register Visitor
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
           </motion.div>
 
           {/* Visitor Table */}
