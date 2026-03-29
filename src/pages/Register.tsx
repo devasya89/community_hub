@@ -58,6 +58,28 @@ const Register = () => {
       return;
     }
 
+    // Since auto-confirm is on, user is now authenticated — create society membership immediately
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && selectedSociety) {
+        // Update profile with phone number
+        await supabase.from('profiles').update({ phone: formData.phone }).eq('id', user.id);
+        
+        // Create society membership (is_active defaults to true)
+        await supabase.from('society_members').insert({
+          user_id: user.id,
+          society_id: selectedSociety.id,
+          unit_number: formData.flatNo,
+          is_active: true,
+        });
+      }
+    } catch (err) {
+      console.error('Error creating membership:', err);
+    }
+
+    // Sign out so user goes through login flow
+    await supabase.auth.signOut();
+
     setIsLoading(false);
     toast({
       title: "Account Created!",
