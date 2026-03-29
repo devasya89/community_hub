@@ -53,13 +53,28 @@ export function CreateMaintenanceDialog({ societies, adminType, selectedSocietyI
   const { data: members = [] } = useQuery({
     queryKey: ['society-members-for-maintenance', societyId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get society members
+      const { data: memberData, error: memberError } = await supabase
         .from('society_members')
-        .select('user_id, unit_number, profiles:user_id(full_name)')
+        .select('user_id, unit_number')
         .eq('society_id', societyId)
         .eq('is_active', true);
-      if (error) throw error;
-      return data as any[];
+      if (memberError) throw memberError;
+      if (!memberData || memberData.length === 0) return [];
+
+      // Then get profiles for those members
+      const userIds = memberData.map(m => m.user_id);
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+      if (profileError) throw profileError;
+
+      // Merge
+      return memberData.map(m => ({
+        ...m,
+        profile_name: profileData?.find(p => p.id === m.user_id)?.full_name || 'Unknown',
+      }));
     },
     enabled: !!societyId,
   });
@@ -71,7 +86,7 @@ export function CreateMaintenanceDialog({ societies, adminType, selectedSocietyI
       if (!month || !dueDate) throw new Error("Fill all fields");
 
       const totalAmount = categories.reduce((s, c) => s + c.amount, 0);
-      const residentName = member.profiles?.full_name || "Resident";
+      const residentName = member.profile_name || "Resident";
 
       const { error } = await supabase.from('maintenance_records').insert({
         society_id: societyId,
@@ -148,7 +163,7 @@ export function CreateMaintenanceDialog({ societies, adminType, selectedSocietyI
               <SelectContent>
                 {members.map((m: any) => (
                   <SelectItem key={m.user_id} value={m.user_id}>
-                    {m.profiles?.full_name || "Unknown"} - {m.unit_number}
+                    {m.profile_name || "Unknown"} - {m.unit_number}
                   </SelectItem>
                 ))}
               </SelectContent>
