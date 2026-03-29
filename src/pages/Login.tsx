@@ -46,7 +46,7 @@ const Login = () => {
       if (user && selectedSociety) {
         const { data: existingMembership } = await supabase
           .from('society_members')
-          .select('id')
+          .select('id, is_active')
           .eq('user_id', user.id)
           .eq('society_id', selectedSociety.id)
           .maybeSingle();
