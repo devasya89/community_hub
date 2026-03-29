@@ -58,7 +58,13 @@ const Login = () => {
             user_id: user.id,
             society_id: selectedSociety.id,
             unit_number: unitNumber,
+            is_active: true,
           });
+        } else if (!existingMembership.is_active) {
+          // Ensure active on login
+          await supabase.from('society_members')
+            .update({ is_active: true })
+            .eq('id', existingMembership.id);
         }
       }
     } catch (err) {
